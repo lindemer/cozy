@@ -3,6 +3,17 @@
 #include <stdbool.h>
 #include <zephyr.h>
 
+#define COSE_CONTEXT_SIGN "Signature"
+#define COSE_CONTEXT_SIGN1 "Signature1"
+#define COSE_CONTEXT_COUNTERSIGN "CounterSignature"
+#define COSE_CONTEXT_MAC "MAC"
+#define COSE_CONTEXT_MAC0 "MAC0"
+#define COSE_CONTEXT_ENCRYPT "Encrypt"
+#define COSE_CONTEXT_ENCRYPT0 "Encrypt0"
+#define COSE_CONTEXT_ENC_RECIPIENT "Enc_Recipient"
+#define COSE_CONTEXT_MAC_RECIPIENT "Mac_Recipient"
+#define COSE_CONTEXT_REC_RECIPIENT "Rec_Recipient"
+
 typedef enum {
     cose_tag_sign = 98,
     cose_tag_sign1 = 18,
@@ -120,7 +131,7 @@ typedef enum {
 } cose_key_octet_param;
 
 typedef enum {
-    cose_key_symmetric_param_k = -1,
+    cose_key_symmetric_param_K = -1,
 } cose_key_symmetric_param;
 
 typedef enum {
