@@ -14,6 +14,9 @@
 #define COSE_CONTEXT_MAC_RECIPIENT "Mac_Recipient"
 #define COSE_CONTEXT_REC_RECIPIENT "Rec_Recipient"
 
+#define COSE_ERROR 0xC053
+#define COSE_ENTROPY_SEED "This should be unique for every device."
+
 typedef enum {
     cose_tag_sign = 98,
     cose_tag_sign1 = 18,
@@ -24,47 +27,47 @@ typedef enum {
 } cose_tag;
 
 typedef enum {
-    cose_algo_aes_gcm_128 = 1,
-    cose_algo_aes_gcm_192 = 2,
-    cose_algo_aes_gcm_256 = 3,
-    cose_algo_hmac_256_64 = 4,
-    cose_algo_hmac_256_256 = 5,
-    cose_algo_hmac_384_384 = 6,
-    cose_algo_hmac_512_512 = 7,
-    cose_algo_cbc_mac_128_64 = 14,
-    cose_algo_cbc_mac_256_64 = 15,
-    cose_algo_cbc_mac_128_128 = 25,
-    cose_algo_cbc_mac_256_128 = 26,
-    cose_algo_aes_ccm_16_64_128 = 10,
-    cose_algo_aes_ccm_16_64_256 = 11,
-    cose_algo_aes_ccm_64_64_128 = 12,
-    cose_algo_aes_ccm_64_64_256 = 13,
-    cose_algo_aes_ccm_16_128_128 = 30,
-    cose_algo_aes_ccm_16_128_256 = 31,
-    cose_algo_aes_ccm_64_128_128 = 32,
-    cose_algo_aes_ccm_64_128_256 = 33,
-    cose_algo_ecdh_es_hkdf_256 = -25,
-    cose_algo_ecdh_es_hkdf_512 = -26,
-    cose_algo_ecdh_ss_hkdf_256 = -27,
-    cose_algo_ecdh_ss_hkdf_512 = -28,
-    cose_algo_ecdh_es_a128kw = -29,
-    cose_algo_ecdh_es_a192kw = -30,
-    cose_algo_ecdh_es_a256kw = -31,
-    cose_algo_ecdh_ss_a128kw = -32,
-    cose_algo_ecdh_ss_a192kw = -33,
-    cose_algo_ecdh_ss_a256kw = -34,
-    cose_algo_aes_kw_128 = -3,
-    cose_algo_aes_kw_192 = -4,
-    cose_algo_aes_kw_256 = -5,
-    cose_algo_direct = -6,
-    cose_algo_direct_hkdf_hmac_sha_256 = -10,
-    cose_algo_direct_hkdf_hmac_sha_512 = -11,
-    cose_algo_direct_hkdf_aes_128 = -12,
-    cose_algo_direct_hkdf_aes_256 = -13,
-    cose_algo_ecdsa_sha_256 = -7,
-    cose_algo_ecdsa_sha_384 = -35,
-    cose_algo_ecdsa_sha_512 = -36,
-} cose_algo;
+    cose_alg_aes_gcm_128 = 1,
+    cose_alg_aes_gcm_192 = 2,
+    cose_alg_aes_gcm_256 = 3,
+    cose_alg_hmac_256_64 = 4,
+    cose_alg_hmac_256_256 = 5,
+    cose_alg_hmac_384_384 = 6,
+    cose_alg_hmac_512_512 = 7,
+    cose_alg_cbc_mac_128_64 = 14,
+    cose_alg_cbc_mac_256_64 = 15,
+    cose_alg_cbc_mac_128_128 = 25,
+    cose_alg_cbc_mac_256_128 = 26,
+    cose_alg_aes_ccm_16_64_128 = 10,
+    cose_alg_aes_ccm_16_64_256 = 11,
+    cose_alg_aes_ccm_64_64_128 = 12,
+    cose_alg_aes_ccm_64_64_256 = 13,
+    cose_alg_aes_ccm_16_128_128 = 30,
+    cose_alg_aes_ccm_16_128_256 = 31,
+    cose_alg_aes_ccm_64_128_128 = 32,
+    cose_alg_aes_ccm_64_128_256 = 33,
+    cose_alg_ecdh_es_hkdf_256 = -25,
+    cose_alg_ecdh_es_hkdf_512 = -26,
+    cose_alg_ecdh_ss_hkdf_256 = -27,
+    cose_alg_ecdh_ss_hkdf_512 = -28,
+    cose_alg_ecdh_es_a128kw = -29,
+    cose_alg_ecdh_es_a192kw = -30,
+    cose_alg_ecdh_es_a256kw = -31,
+    cose_alg_ecdh_ss_a128kw = -32,
+    cose_alg_ecdh_ss_a192kw = -33,
+    cose_alg_ecdh_ss_a256kw = -34,
+    cose_alg_aes_kw_128 = -3,
+    cose_alg_aes_kw_192 = -4,
+    cose_alg_aes_kw_256 = -5,
+    cose_alg_direct = -6,
+    cose_alg_direct_hkdf_hmac_sha_256 = -10,
+    cose_alg_direct_hkdf_hmac_sha_512 = -11,
+    cose_alg_direct_hkdf_aes_128 = -12,
+    cose_alg_direct_hkdf_aes_256 = -13,
+    cose_alg_ecdsa_sha_256 = -7,
+    cose_alg_ecdsa_sha_384 = -35,
+    cose_alg_ecdsa_sha_512 = -36,
+} cose_alg;
 
 typedef enum {
     cose_header_algorithm = 1,
@@ -145,15 +148,27 @@ typedef enum {
 } cose_curve;
 
 typedef struct {
-    bool tagged;
-    size_t payload_size;
-    const uint8_t * payload;
-    uint8_t * buffer;
-} cose_config;
+    mbedtls_pk_context pk;
+    mbedtls_ctr_drbg_context ctr_drbg;
+    mbedtls_entropy_context entropy;
+    mbedtls_md_type_t md_alg;
+    cose_alg alg;
+} cose_sign_context;
 
-int cose_encode_sign1(cose_config * config);
-int cose_encode_sign(cose_config * config);
-int cose_encode_encrypt(cose_config * config);
-int cose_encode_encrypt0(cose_config * config);
-int cose_encode_mac(cose_config * config);
-int cose_encode_mac0(cose_config * config);
+int cose_sign_init(cose_sign_context * ctx);
+int cose_sign_free(cose_sign_context * ctx);
+int cose_sign1_encode(cose_sign_context * ctx, 
+        const uint8_t * msg, size_t ilen, 
+        uint8_t * buf, size_t * olen);
+int cose_sign1_decode(
+        const uint8_t * msg, size_t ilen, 
+        uint8_t * buf, size_t * olen);
+
+typedef struct {
+    mbedtls_gcm_context gcm;
+} cose_mac_context;
+
+int cose_mac_init(cose_mac_context * ctx);
+int cose_mac0_encode(cose_mac_context *ctx,
+        const uint8_t * msg, size_t ilen, 
+        uint8_t * buf, size_t * olen);
