@@ -1,3 +1,5 @@
+#ifndef COSE_H
+#define COSE_H
 #include <zephyr.h>
 
 #include <mbedtls/md.h>
@@ -248,3 +250,4 @@ int cose_encrypt0_read(cose_crypt_context * ctx,
         const uint8_t * iv, size_t len_iv,
         uint8_t * pld, size_t * len_pld);
 
+#endif /* COSE_H */
