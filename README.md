@@ -1,5 +1,5 @@
 # cozy
-This is very much a work in progress. See unit tests in `src/unit_tests.c` for examples. This library is built on [mbedTLS](https://github.com/zephyrproject-rtos/mbedtls) and [TinyCBOR](https://github.com/zephyrproject-rtos/tinycbor). Run tests from the app directory using `west build -t run -b native_posix`.
+This is very much a work in progress. See unit tests in `src/tests.c` for examples. This library is built on [mbedTLS](https://github.com/zephyrproject-rtos/mbedtls) and [TinyCBOR](https://github.com/zephyrproject-rtos/tinycbor). Run tests from the app directory using `west build -t run -b native_posix`.
 
 ## Project Roadmap
 * Support for COSE signing with ECDSA keys.
