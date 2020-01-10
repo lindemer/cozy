@@ -1,7 +1,18 @@
-#include <stddef.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <zephyr.h>
+
+#include <mbedtls/md.h>
+#include <mbedtls/pk.h>
+#include <mbedtls/gcm.h>
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/entropy.h>
+
+#include <tinycbor/cbor.h>
+
+#ifndef CONFIG_MBEDTLS_CFG_FILE
+#include "mbedtls/config.h"
+#else
+#include CONFIG_MBEDTLS_CFG_FILE
+#endif
 
 #define COSE_CONTEXT_SIGN "Signature"
 #define COSE_CONTEXT_SIGN1 "Signature1"
