@@ -17,6 +17,10 @@
 #define COSE_ERROR 0xC053
 #define COSE_ENTROPY_SEED "This should be unique for every device."
 
+/* 
+ * constants
+ */
+
 typedef enum {
     cose_tag_sign = 98,
     cose_tag_sign1 = 18,
@@ -147,28 +151,89 @@ typedef enum {
     cose_curve_ed448 = 7,
 } cose_curve;
 
-typedef struct {
+/*
+ * internal key structs
+ */
+
+typedef struct { 
     mbedtls_pk_context pk;
-    mbedtls_ctr_drbg_context ctr_drbg;
-    mbedtls_entropy_context entropy;
     mbedtls_md_type_t md_alg;
     cose_alg alg;
-} cose_sign_context;
+    uint8_t id[16];
+    size_t len_id;
+} cose_asym_key;
 
-int cose_sign_init(cose_sign_context * ctx);
-int cose_sign_free(cose_sign_context * ctx);
-int cose_sign1_encode(cose_sign_context * ctx, 
-        const uint8_t * msg, size_t ilen, 
-        uint8_t * buf, size_t * olen);
-int cose_sign1_decode(
-        const uint8_t * msg, size_t ilen, 
-        uint8_t * buf, size_t * olen);
+typedef struct { 
+    mbedtls_gcm_context gcm;
+    uint8_t id[16];
+    size_t len_id;
+} cose_sym_key;
+
+/*
+ * context structs
+ */
 
 typedef struct {
-    mbedtls_gcm_context gcm;
-} cose_mac_context;
+    cose_asym_key key;
+    mbedtls_ctr_drbg_context ctr_drbg;
+    mbedtls_entropy_context entropy;
+} cose_sign_context;
 
-int cose_mac_init(cose_mac_context * ctx);
-int cose_mac0_encode(cose_mac_context *ctx,
-        const uint8_t * msg, size_t ilen, 
-        uint8_t * buf, size_t * olen);
+typedef struct {
+    cose_asym_key key;
+} cose_verify_context;
+
+typedef struct {
+    cose_sym_key key;
+} cose_crypt_context;
+
+/*
+ * context initialization methods 
+ */
+
+int cose_sign_init(cose_sign_context * ctx,
+        const uint8_t * key, size_t len_key,
+        const uint8_t * kid, size_t len_kid);
+
+int cose_verify_init(cose_verify_context * ctx,
+        const uint8_t * key, size_t len_key,
+        const uint8_t * kid, size_t len_kid);
+
+int cose_crypt_init(cose_crypt_context * ctx,
+        const uint8_t * key, size_t len_key,
+        const uint8_t * kid, size_t len_kid);
+
+/* 
+ * context teardown methods
+ */
+
+int cose_sign_free(cose_sign_context * ctx);
+int cose_verify_free(cose_verify_context * ctx);
+int cose_crypt_free(cose_crypt_context * ctx);
+
+/* 
+ * main api
+ */
+
+int cose_sign1_write(cose_sign_context * ctx, 
+        const uint8_t * pld, size_t len_pld, 
+        const uint8_t * aad, size_t len_aad,
+        uint8_t * obj, size_t * len_obj);
+
+int cose_sign1_read(cose_verify_context * ctx,
+        const uint8_t * obj, size_t len_obj, 
+        const uint8_t * aad, size_t len_aad,
+        uint8_t * pld, size_t * len_pld);
+
+int cose_encrypt0_write(cose_crypt_context *ctx,
+        const uint8_t * pld, size_t len_pld, 
+        const uint8_t * aad, size_t len_aad,
+        const uint8_t * iv, size_t len_iv,
+        uint8_t * obj, size_t * len_obj);
+
+int cose_encrypt0_read(cose_crypt_context * ctx,
+        const uint8_t * obj, size_t len_obj, 
+        const uint8_t * aad, size_t len_aad,
+        const uint8_t * iv, size_t len_iv,
+        uint8_t * pld, size_t * len_pld);
+
