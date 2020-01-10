@@ -1,5 +1,6 @@
 #ifndef COSE_H
 #define COSE_H
+
 #include <zephyr.h>
 
 #include <mbedtls/md.h>
@@ -29,10 +30,6 @@
 
 #define COSE_ERROR 0xC053
 #define COSE_ENTROPY_SEED "This should be unique for every device."
-
-/* 
- * constants
- */
 
 typedef enum {
     cose_tag_sign = 98,
@@ -164,10 +161,6 @@ typedef enum {
     cose_curve_ed448 = 7,
 } cose_curve;
 
-/*
- * internal key structs
- */
-
 typedef struct { 
     mbedtls_pk_context pk;
     mbedtls_md_type_t md_alg;
@@ -181,10 +174,6 @@ typedef struct {
     uint8_t id[16];
     size_t len_id;
 } cose_sym_key;
-
-/*
- * context structs
- */
 
 typedef struct {
     cose_asym_key key;
@@ -200,10 +189,6 @@ typedef struct {
     cose_sym_key key;
 } cose_crypt_context;
 
-/*
- * context initialization methods 
- */
-
 int cose_sign_init(cose_sign_context * ctx,
         const uint8_t * key, size_t len_key,
         const uint8_t * kid, size_t len_kid);
@@ -216,17 +201,9 @@ int cose_crypt_init(cose_crypt_context * ctx,
         const uint8_t * key, size_t len_key,
         const uint8_t * kid, size_t len_kid);
 
-/* 
- * context teardown methods
- */
-
 int cose_sign_free(cose_sign_context * ctx);
 int cose_verify_free(cose_verify_context * ctx);
 int cose_crypt_free(cose_crypt_context * ctx);
-
-/* 
- * main api
- */
 
 int cose_sign1_write(cose_sign_context * ctx, 
         const uint8_t * pld, size_t len_pld, 

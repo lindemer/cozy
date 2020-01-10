@@ -3,7 +3,7 @@
 
 #include <ztest.h>
 #include "cose.h"
-#include "test_vectors.h"
+#include "vectors.h"
 
 const uint8_t * pld = COSE_TEST_PLD;
 const uint8_t * aad = COSE_TEST_AAD;
@@ -83,10 +83,10 @@ void cose_test_encrypt0_read(void) {
 
     zassert_false(cose_encrypt0_read(&ctx, 
                 obj, len_obj, aad, len_aad, iv, sizeof(iv), out, &len_out), 
-            "Failed to decrypt payload.\n"); 
+            "Failed to decrypt COSE payload.\n"); 
 
     zassert_false(strcmp(out, pld),
-            "Failed to decode payload.\n");
+            "Failed to decode COSE payload.\n");
 
     zassert_false(0, ""); 
 }
