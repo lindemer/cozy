@@ -13,7 +13,7 @@ uint8_t out[4096];
 size_t len_obj;
 size_t len_out;
 
-void cose_test_sign1_write(void) {
+void cose_test_sign_write(void) {
     const uint8_t * key = COSE_TEST_KEY_256_PRIV;
 
     size_t len_pld = strlen(pld);
@@ -24,14 +24,14 @@ void cose_test_sign1_write(void) {
     zassert_false(cose_sign_init(&ctx, key, strlen(key), kid, sizeof(kid)), 
             "Failed to initialize COSE signing context.\n");
 
-    zassert_false(cose_sign1_write(&ctx, 
+    zassert_false(cose_sign_write(&ctx, 
                 pld, len_pld, aad, len_aad, obj, &len_obj), 
             "Failed to sign COSE object.\n"); 
 
     cose_sign_free(&ctx);
 }
 
-void cose_test_sign1_read(void) {
+void cose_test_sign_read(void) {
     const uint8_t * key = COSE_TEST_KEY_256_PUB;
     
     size_t len_aad = strlen(aad);
@@ -41,7 +41,7 @@ void cose_test_sign1_read(void) {
     zassert_false(cose_verify_init(&ctx, key, strlen(key), kid, sizeof(kid)), 
             "Failed to initialize COSE verification context.\n");
 
-    zassert_false(cose_sign1_read(&ctx, 
+    zassert_false(cose_sign_read(&ctx, 
                 obj, len_obj, aad, len_aad, out, &len_out), 
             "Failed to authenticate signature.\n"); 
 
@@ -52,8 +52,8 @@ void cose_test_sign1_read(void) {
 }
 
 void cose_test_encrypt0_write(void) {
-    const uint8_t key[32] = COSE_TEST_KEY_256_SYM;
-    const uint8_t iv[12] = COSE_TEST_KEY_IV;
+    const uint8_t key[16] = COSE_TEST_KEY_128_SYM;
+    const uint8_t iv[12] = COSE_TEST_IV;
     cose_alg alg = cose_alg_aes_gcm_128;
 
     size_t len_pld = strlen(pld);
@@ -72,7 +72,7 @@ void cose_test_encrypt0_write(void) {
 }
 
 void cose_test_encrypt0_read(void) {
-    const uint8_t key[32] = COSE_TEST_KEY_256_SYM;
+    const uint8_t key[16] = COSE_TEST_KEY_128_SYM;
     cose_alg alg = cose_alg_aes_gcm_128;
 
     size_t len_aad = strlen(aad);

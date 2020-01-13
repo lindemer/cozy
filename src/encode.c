@@ -187,8 +187,9 @@ int cose_encode_encrypt0_obj(
 
     cbor_encoder_init(&encoder_obj0, obj, *len_obj, 0);
     cbor_encode_tag(&encoder_obj0, cose_tag_encrypt0);                          // tag
-    cbor_encoder_create_array(&encoder_obj0, &encoder_arr0, 4);
-    cbor_encode_byte_string(&encoder_arr0, NULL, 0);                            // protected
+    cbor_encoder_create_array(&encoder_obj0, &encoder_arr0, 3);
+    cose_encode_protected(key, pro, &len_pro);                                  // protected
+    cbor_encode_byte_string(&encoder_arr0, pro, len_pro);
     cbor_encoder_create_map(&encoder_arr0, &encoder_map0, 1);                   // unprotected
     cbor_encode_int(&encoder_map0, cose_header_iv);
     cbor_encode_byte_string(&encoder_map0, iv, len_iv);                         // iv 
@@ -216,13 +217,16 @@ int cose_decode_encrypt0_obj(
     cbor_value_enter_container(&par0, &par1);                                   // protected
     cbor_value_advance(&par1);                                                  // unprotected 
     cbor_value_enter_container(&par1, &par2);                                   // iv
-    if (!cbor_value_is_integer(&par2)) return COSE_ERROR_DECODE;
+    
+    int header;
+    if (cbor_value_get_int(&par2, &header)) return COSE_ERROR_DECODE;
+    if (header != cose_header_iv) return COSE_ERROR_DECODE;
     cbor_value_advance(&par2);
     if (cbor_value_copy_byte_string(&par2, iv, len_iv, &par2) != CborNoError)
         return COSE_ERROR_TINYCBOR;
     cbor_value_leave_container(&par1, &par2);
+
     if (cbor_value_copy_byte_string(&par1, enc, len_enc, &par1) != CborNoError)
-        printk("Fails here with unknown TinyCBOR error... why?\n");
         return COSE_ERROR_TINYCBOR;
     
      return COSE_ERROR_NONE;

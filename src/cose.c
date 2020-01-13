@@ -110,7 +110,7 @@ int cose_crypt_free(cose_crypt_context * ctx)
     return COSE_ERROR_NONE;
 }
 
-int cose_sign1_write(cose_sign_context * ctx, 
+int cose_sign_write(cose_sign_context * ctx, 
         const uint8_t * pld, size_t len_pld, 
         const uint8_t * aad, size_t len_aad,
         uint8_t * obj, size_t * len_obj) 
@@ -137,7 +137,7 @@ int cose_sign1_write(cose_sign_context * ctx,
     return COSE_ERROR_NONE;
 }
 
-int cose_sign1_read(cose_verify_context * ctx, 
+int cose_sign_read(cose_verify_context * ctx, 
         const uint8_t * obj, size_t len_obj, 
         const uint8_t * aad, size_t len_aad,
         uint8_t * pld, size_t * len_pld) 
@@ -165,18 +165,38 @@ int cose_sign1_read(cose_verify_context * ctx,
 
 int cose_crypt_encipher(
         cose_crypt_context * ctx,
-        const uint8_t * pld, size_t len_pld,
-        const uint8_t * tbe, size_t len_tbe,
-        const uint8_t * iv, size_t len_iv,
+        const uint8_t * pld, const size_t len_pld,
+        const uint8_t * tbe, const size_t len_tbe,
+        const uint8_t * iv, const size_t len_iv,
         uint8_t * enc) 
 {
     if (ctx->key.alg == cose_alg_aes_gcm_128 || 
-        ctx->key.alg == cose_alg_aes_gcm_192 ||
-        ctx->key.alg == cose_alg_aes_gcm_256) {
+            ctx->key.alg == cose_alg_aes_gcm_192 ||
+            ctx->key.alg == cose_alg_aes_gcm_256) {
 
-            if (mbedtls_gcm_crypt_and_tag(&ctx->gcm, MBEDTLS_GCM_ENCRYPT, len_pld, 
-                        iv, len_iv, tbe, len_tbe, pld, enc, ctx->len_mac, enc + len_pld))
-                return COSE_ERROR_ENCRYPT;
+        if (mbedtls_gcm_crypt_and_tag(&ctx->gcm, MBEDTLS_GCM_ENCRYPT, len_pld, 
+                    iv, len_iv, tbe, len_tbe, pld, enc, ctx->len_mac, enc + len_pld))
+            return COSE_ERROR_ENCRYPT;
+
+    } else return COSE_ERROR_UNSUPPORTED;
+    return COSE_ERROR_NONE;
+}
+
+int cose_crypt_decipher(
+        cose_crypt_context * ctx,
+        const uint8_t * enc, const size_t len_enc,
+        const uint8_t * tbe, const size_t len_tbe,
+        const uint8_t * iv, const size_t len_iv,
+        uint8_t * pld, size_t * len_pld) 
+{
+    if (ctx->key.alg == cose_alg_aes_gcm_128 || 
+            ctx->key.alg == cose_alg_aes_gcm_192 ||
+            ctx->key.alg == cose_alg_aes_gcm_256) {
+
+        *len_pld = len_enc - ctx->len_mac;
+        if (mbedtls_gcm_auth_decrypt(&ctx->gcm, *len_pld, iv, len_iv, tbe, len_tbe, 
+                    enc + *len_pld, ctx->len_mac, enc, pld))
+            return COSE_ERROR_DECRYPT;
             
     } else return COSE_ERROR_UNSUPPORTED;
     return COSE_ERROR_NONE;
@@ -225,6 +245,9 @@ int cose_encrypt0_read(cose_crypt_context * ctx,
 
     if (cose_decode_encrypt0_obj(obj, len_obj, enc, &len_enc, iv, &len_iv))
         return COSE_ERROR_DECODE; 
+
+    if (cose_crypt_decipher(ctx, enc, len_enc, tbe, len_tbe, iv, len_iv, pld, len_pld))
+        return COSE_ERROR_DECRYPT;
 
     return COSE_ERROR_NONE;
 }
