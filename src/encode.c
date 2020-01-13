@@ -1,25 +1,6 @@
 #include "cose.h"
 #include "encode.h"
 
-int cose_sign_get_alg(cose_asym_key * key) 
-{
-    mbedtls_pk_type_t pk_type = mbedtls_pk_get_type(&key->pk);
-    if (pk_type == MBEDTLS_PK_ECKEY) { 
-        size_t bitlen = mbedtls_pk_get_bitlen(&key->pk);
-        if (bitlen == 256) {
-            key->alg = cose_alg_ecdsa_sha_256;
-            key->md_alg = MBEDTLS_MD_SHA256;
-        } else if (bitlen == 384) {
-            key->alg = cose_alg_ecdsa_sha_384;
-            key->md_alg = MBEDTLS_MD_SHA384;
-        } else if (bitlen == 512) {
-            key->alg = cose_alg_ecdsa_sha_512;
-            key->md_alg = MBEDTLS_MD_SHA512;
-        } else return COSE_ERROR;
-        return 0;
-    } else return COSE_ERROR;
-}
-
 int cose_sign_encode_tbs(
         const uint8_t * pld, size_t len_pld, 
         const uint8_t * aad, size_t len_aad,
@@ -61,11 +42,11 @@ int cose_sign_encode_tbs(
     return 0;
 }
 
-int cose_sign_encode_final(cose_asym_key * key,
+int cose_sign_encode_final(cose_key * key,
         const uint8_t * pld, size_t len_pld, 
         const uint8_t * aad, size_t len_aad,
         const uint8_t * sig, size_t len_sig,
-        uint8_t * out, size_t * len_out) 
+        uint8_t * obj, size_t * len_obj) 
 {
     
     size_t len_buf = 64;
@@ -76,7 +57,7 @@ int cose_sign_encode_final(cose_asym_key * key,
                 encoder_arr_1, encoder_arr_2, 
                 encoder_map, encoder_buf;
 
-    cbor_encoder_init(&encoder_obj, out, *len_out, 0);
+    cbor_encoder_init(&encoder_obj, obj, *len_obj, 0);
     cbor_encode_tag(&encoder_obj, cose_tag_sign1);                      // tag
     cbor_encoder_create_array(&encoder_obj, &encoder_arr_0, 4);
     cbor_encode_byte_string(&encoder_arr_0, NULL, 0);                   // protected
@@ -97,14 +78,14 @@ int cose_sign_encode_final(cose_asym_key * key,
 
     cbor_encoder_create_map(&encoder_arr_2, &encoder_map, 1);           // unprotected
     cbor_encode_int(&encoder_map, cose_header_kid);                     // kid
-    cbor_encode_byte_string(&encoder_map, key->id, key->len_id);
+    cbor_encode_byte_string(&encoder_map, key->kid, key->len_kid);
     cbor_encoder_close_container(&encoder_arr_2, &encoder_map);
     cbor_encode_byte_string(&encoder_arr_1, sig, len_sig);              // signature
     cbor_encoder_close_container(&encoder_arr_1, &encoder_arr_2);
     cbor_encoder_close_container(&encoder_arr_0, &encoder_arr_1);
     cbor_encoder_close_container(&encoder_obj, &encoder_arr_0);
     if (cbor_encoder_get_extra_bytes_needed(&encoder_obj)) return COSE_ERROR;
-    *len_out = cbor_encoder_get_buffer_size(&encoder_obj, out);
+    *len_obj = cbor_encoder_get_buffer_size(&encoder_obj, obj);
     return 0;
 }
 
@@ -165,5 +146,65 @@ int cose_sign_decode_obj(
     
     return 0;
 }
+
+int cose_crypt_encode_tbe(
+        cose_crypt_context * ctx,
+        const uint8_t * aad, size_t len_aad,
+        uint8_t * tbe, size_t * len_tbe)
+{
+    size_t len_buf = 64;
+    size_t use_buf;
+    uint8_t buf[len_buf];
+
+    CborEncoder encoder_obj, encoder_arr, 
+                encoder_map, encoder_buf;
+
+    cbor_encoder_init(&encoder_obj, tbe, *len_tbe, 0);
+    cbor_encoder_create_array(&encoder_obj, &encoder_arr, 3);               // Enc_structure
+    cbor_encode_text_string(&encoder_arr, COSE_CONTEXT_ENCRYPT0,            // context
+            strlen(COSE_CONTEXT_ENCRYPT0));
+
+    // TODO: populate this field
+    cbor_encoder_init(&encoder_buf, buf, len_buf, 0);
+    cbor_encoder_create_map(&encoder_buf, &encoder_map, 0);                 // protected
+    cbor_encoder_close_container(&encoder_buf, &encoder_map);
+    if (cbor_encoder_get_extra_bytes_needed(&encoder_buf)) return COSE_ERROR;
+    use_buf = cbor_encoder_get_buffer_size(&encoder_buf, buf);
+    cbor_encode_byte_string(&encoder_arr, buf, use_buf);
+
+    cbor_encode_byte_string(&encoder_arr, aad, len_aad);                    // external_aad
+    cbor_encoder_close_container(&encoder_obj, &encoder_arr);
+    if (cbor_encoder_get_extra_bytes_needed(&encoder_obj)) return COSE_ERROR;
+    *len_tbe = cbor_encoder_get_buffer_size(&encoder_obj, tbe);
+    return 0;
+}
+
+int cose_crypt_encipher(
+        cose_crypt_context * ctx,
+        const uint8_t * pld, size_t len_pld,
+        const uint8_t * tbe, size_t len_tbe,
+        const uint8_t * iv, size_t len_iv,
+        uint8_t * enc, uint8_t * tag) 
+{
+    if (ctx->key.alg == cose_alg_aes_gcm_128 || 
+        ctx->key.alg == cose_alg_aes_gcm_192 ||
+        ctx->key.alg == cose_alg_aes_gcm_256) {
+
+            mbedtls_gcm_crypt_and_tag(&ctx->gcm, MBEDTLS_GCM_ENCRYPT, len_pld, 
+                    iv, len_iv, tbe, len_tbe, pld, enc, ctx->len_tag, tag);
+            
+    } else return COSE_ERROR;
+    return 0;
+}
+
+
+int cose_crypt_encode_final(
+        cose_crypt_context * ctx,
+        const uint8_t * enc, size_t len_enc, 
+        const uint8_t * tag, size_t len_tag,
+        uint8_t * out, size_t * len_out) {
+
+    return 0;
+} 
 
 

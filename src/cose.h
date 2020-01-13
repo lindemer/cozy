@@ -2,13 +2,6 @@
 #define COSE_H
 
 #include <zephyr.h>
-
-#include <mbedtls/md.h>
-#include <mbedtls/pk.h>
-#include <mbedtls/gcm.h>
-#include <mbedtls/ctr_drbg.h>
-#include <mbedtls/entropy.h>
-
 #include <tinycbor/cbor.h>
 
 #ifndef CONFIG_MBEDTLS_CFG_FILE
@@ -16,6 +9,13 @@
 #else
 #include CONFIG_MBEDTLS_CFG_FILE
 #endif
+
+#include <mbedtls/md.h>
+#include <mbedtls/pk.h>
+#include <mbedtls/ccm.h>
+#include <mbedtls/gcm.h>
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/entropy.h>
 
 #define COSE_CONTEXT_SIGN "Signature"
 #define COSE_CONTEXT_SIGN1 "Signature1"
@@ -129,27 +129,27 @@ typedef enum {
 } cose_key_op;
 
 typedef enum {
-    cose_key_type_okp = 1,
-    cose_key_type_ec2 = 2,
-    cose_key_type_symmetric = 4,
-} cose_key_type;
+    cose_kty_okp = 1,
+    cose_kty_ec2 = 2,
+    cose_kty_symmetric = 4,
+} cose_kty;
 
 typedef enum {
-    cose_key_ec_param_crv = -1,
-    cose_key_ec_param_x = -2,
-    cose_key_ec_param_y = -3,
-    cose_key_ec_param_d = -4,
-} cose_key_ec_param;
+    cose_ec_param_crv = -1,
+    cose_ec_param_x = -2,
+    cose_ec_param_y = -3,
+    cose_ec_param_d = -4,
+} cose_ec_param;
 
 typedef enum {
-    cose_key_octet_param_crv = -1,
-    cose_key_octet_param_x = -2,
-    cose_key_octet_param_d = -4,
-} cose_key_octet_param;
+    cose_octet_param_crv = -1,
+    cose_octet_param_x = -2,
+    cose_octet_param_d = -4,
+} cose_octet_param;
 
 typedef enum {
-    cose_key_symmetric_param_K = -1,
-} cose_key_symmetric_param;
+    cose_symmetric_param_K = -1,
+} cose_symmetric_param;
 
 typedef enum {
     cose_curve_p256 = 1,
@@ -161,32 +161,33 @@ typedef enum {
     cose_curve_ed448 = 7,
 } cose_curve;
 
-typedef struct { 
-    mbedtls_pk_context pk;
-    mbedtls_md_type_t md_alg;
+typedef struct {
+    cose_kty kty;
+    uint8_t kid[16];
     cose_alg alg;
-    uint8_t id[16];
-    size_t len_id;
-} cose_asym_key;
-
-typedef struct { 
-    mbedtls_gcm_context gcm;
-    uint8_t id[16];
-    size_t len_id;
-} cose_sym_key;
+    size_t len_kid;
+    size_t len_key;
+} cose_key;
 
 typedef struct {
-    cose_asym_key key;
+    cose_key key;
+    mbedtls_pk_context pk;
+    mbedtls_md_type_t md_alg;
     mbedtls_ctr_drbg_context ctr_drbg;
     mbedtls_entropy_context entropy;
 } cose_sign_context;
 
 typedef struct {
-    cose_asym_key key;
+    cose_key key;
+    mbedtls_pk_context pk;
+    mbedtls_md_type_t md_alg;
 } cose_verify_context;
 
 typedef struct {
-    cose_sym_key key;
+    cose_key key;
+    int cipher;
+    size_t len_tag;
+    mbedtls_gcm_context gcm;
 } cose_crypt_context;
 
 int cose_sign_init(cose_sign_context * ctx,
@@ -198,7 +199,7 @@ int cose_verify_init(cose_verify_context * ctx,
         const uint8_t * kid, size_t len_kid);
 
 int cose_crypt_init(cose_crypt_context * ctx,
-        const uint8_t * key, size_t len_key,
+        const uint8_t * key, cose_alg alg,
         const uint8_t * kid, size_t len_kid);
 
 int cose_sign_free(cose_sign_context * ctx);

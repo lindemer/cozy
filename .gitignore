@@ -53,7 +53,9 @@ dkms.conf
 
 # Vim swap files
 .*.swp
+.*.swo
 .*.*.swp
+.*.*.swo
 
 # Zephyr build files
 build/
