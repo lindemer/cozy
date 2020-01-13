@@ -61,7 +61,7 @@ void cose_test_encrypt0_write(void) {
     len_obj = sizeof(obj);
 
     cose_crypt_context ctx;
-    zassert_false(cose_crypt_init(&ctx, key, alg, kid, sizeof(kid)),
+    zassert_false(cose_crypt_init(&ctx, key, alg, NULL, 0),
             "Failed to initialize COSE encryption context.\n");
 
     zassert_false(cose_encrypt0_write(&ctx, 
@@ -73,18 +73,17 @@ void cose_test_encrypt0_write(void) {
 
 void cose_test_encrypt0_read(void) {
     const uint8_t key[32] = COSE_TEST_KEY_256_SYM;
-    const uint8_t iv[12] = COSE_TEST_KEY_IV;
     cose_alg alg = cose_alg_aes_gcm_128;
 
     size_t len_aad = strlen(aad);
     size_t len_out = sizeof(out);
 
     cose_crypt_context ctx;
-    zassert_false(cose_crypt_init(&ctx, key, alg, kid, sizeof(kid)),
+    zassert_false(cose_crypt_init(&ctx, key, alg, NULL, 0),
             "Failed to initialize COSE encryption context.\n");
 
     zassert_false(cose_encrypt0_read(&ctx, 
-                obj, len_obj, aad, len_aad, iv, sizeof(iv), out, &len_out), 
+                obj, len_obj, aad, len_aad, out, &len_out), 
             "Failed to decrypt COSE payload.\n"); 
 
     zassert_false(strcmp(out, pld),

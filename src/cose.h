@@ -12,7 +12,6 @@
 
 #include <mbedtls/md.h>
 #include <mbedtls/pk.h>
-#include <mbedtls/ccm.h>
 #include <mbedtls/gcm.h>
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
@@ -28,8 +27,21 @@
 #define COSE_CONTEXT_MAC_RECIPIENT "Mac_Recipient"
 #define COSE_CONTEXT_REC_RECIPIENT "Rec_Recipient"
 
-#define COSE_ERROR 0xC053
 #define COSE_ENTROPY_SEED "This should be unique for every device."
+
+#define COSE_ERROR_NONE                 0x00
+#define COSE_ERROR_MBEDTLS              0x01
+#define COSE_ERROR_TINYCBOR             0x02
+#define COSE_ERROR_UNSUPPORTED          0x03
+#define COSE_ERROR_ENCODE               0x04
+#define COSE_ERROR_DECODE               0x05
+#define COSE_ERROR_AUTHENTICATE         0x06
+#define COSE_ERROR_MISMATCH             0x07
+#define COSE_ERROR_HASH                 0x08
+#define COSE_ERROR_ENCRYPT              0x09
+#define COSE_ERROR_DECRYPT              0x0a
+#define COSE_ERROR_SIGN                 0x0b
+#define COSE_ERROR_OVERFLOW             0x0c
 
 typedef enum {
     cose_tag_sign = 98,
@@ -186,7 +198,7 @@ typedef struct {
 typedef struct {
     cose_key key;
     int cipher;
-    size_t len_tag;
+    size_t len_mac;
     mbedtls_gcm_context gcm;
 } cose_crypt_context;
 
@@ -206,26 +218,37 @@ int cose_sign_free(cose_sign_context * ctx);
 int cose_verify_free(cose_verify_context * ctx);
 int cose_crypt_free(cose_crypt_context * ctx);
 
-int cose_sign1_write(cose_sign_context * ctx, 
+int cose_sign_write(cose_sign_context * ctx, 
         const uint8_t * pld, size_t len_pld, 
         const uint8_t * aad, size_t len_aad,
         uint8_t * obj, size_t * len_obj);
 
-int cose_sign1_read(cose_verify_context * ctx,
+int cose_sign_read(cose_verify_context * ctx,
         const uint8_t * obj, size_t len_obj, 
         const uint8_t * aad, size_t len_aad,
         uint8_t * pld, size_t * len_pld);
 
-int cose_encrypt0_write(cose_crypt_context *ctx,
+int cose_encrypt_write(cose_crypt_context *ctx,
         const uint8_t * pld, size_t len_pld, 
         const uint8_t * aad, size_t len_aad,
         const uint8_t * iv, size_t len_iv,
         uint8_t * obj, size_t * len_obj);
 
-int cose_encrypt0_read(cose_crypt_context * ctx,
+int cose_encrypt_read(cose_crypt_context * ctx,
         const uint8_t * obj, size_t len_obj, 
         const uint8_t * aad, size_t len_aad,
         const uint8_t * iv, size_t len_iv,
+        uint8_t * pld, size_t * len_pld);
+
+int cose_mac_write(cose_crypt_context *ctx,
+        const uint8_t * pld, size_t len_pld, 
+        const uint8_t * aad, size_t len_aad,
+        const uint8_t * iv, size_t len_iv,
+        uint8_t * obj, size_t * len_obj);
+
+int cose_mac_read(cose_crypt_context * ctx,
+        const uint8_t * obj, size_t len_obj, 
+        const uint8_t * aad, size_t len_aad,
         uint8_t * pld, size_t * len_pld);
 
 #endif /* COSE_H */
