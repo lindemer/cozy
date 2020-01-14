@@ -214,9 +214,9 @@ int cose_crypt_init(cose_crypt_context * ctx,
         const uint8_t * key, cose_alg alg,
         const uint8_t * kid, size_t len_kid);
 
-int cose_sign_free(cose_sign_context * ctx);
-int cose_verify_free(cose_verify_context * ctx);
-int cose_crypt_free(cose_crypt_context * ctx);
+void cose_sign_free(cose_sign_context * ctx);
+void cose_verify_free(cose_verify_context * ctx);
+void cose_crypt_free(cose_crypt_context * ctx);
 
 int cose_sign_write(cose_sign_context * ctx, 
         const uint8_t * pld, size_t len_pld, 

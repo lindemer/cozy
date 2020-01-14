@@ -1,5 +1,5 @@
-#ifndef ENCODE_H
-#define ENCODE_H
+#ifndef SHARED_H
+#define SHARED_H
 
 #include "cose.h"
 
@@ -13,18 +13,18 @@ int cose_encode_sign_tbs(
         const uint8_t * aad, size_t len_aad,
         uint8_t * tbs, size_t * len_tbs);
 
-int cose_encode_sign_obj(
+int cose_encode_sign_object(
         cose_key * key,
         const uint8_t * pld, size_t len_pld, 
         const uint8_t * aad, size_t len_aad,
         const uint8_t * sig, size_t len_sig,
         uint8_t * obj, size_t * len_obj);
     
-int cose_decode_sign_pld(
+int cose_decode_sign_payload(
         const uint8_t * obj, size_t len_obj,
         uint8_t * pld, size_t * len_pld);
 
-int cose_decode_sign_obj(
+int cose_decode_sign_object(
         cose_key * key,
         const uint8_t * obj, size_t len_obj,
         const uint8_t * aad, size_t len_aad,
@@ -36,15 +36,15 @@ int cose_encode_encrypt0_tbe(
         const uint8_t * aad, size_t len_aad,
         uint8_t * tbe, size_t * len_tbe);
 
-int cose_encode_encrypt0_obj(
+int cose_encode_encrypt0_object(
         cose_key * key,
         const uint8_t * enc, size_t len_enc, 
         const uint8_t * iv, size_t len_iv,
         uint8_t * obj, size_t * len_obj);
 
-int cose_decode_encrypt0_obj(
+int cose_decode_encrypt0_object(
         const uint8_t * obj, size_t len_obj,
         uint8_t * enc, size_t * len_enc,
         uint8_t * iv, size_t * len_iv);
 
-#endif /* ENCODE_H */
+#endif /* SHARED_H */
