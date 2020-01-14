@@ -29,7 +29,8 @@
 
 #define COSE_ENTROPY_SEED "This should be unique for every device."
 
-/** @brief COSE API
+/** 
+ * @brief COSE API
  * @{
  */
 #define COSE_ERROR_NONE                 0x00
