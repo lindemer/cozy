@@ -239,13 +239,13 @@ int cose_encrypt0_read(cose_crypt_context * ctx,
         const uint8_t * aad, size_t len_aad,
         uint8_t * pld, size_t * len_pld);
 
-int cose_mac_write(cose_crypt_context *ctx,
+int cose_mac0_write(cose_crypt_context *ctx,
         const uint8_t * pld, size_t len_pld, 
         const uint8_t * aad, size_t len_aad,
         const uint8_t * iv, size_t len_iv,
         uint8_t * obj, size_t * len_obj);
 
-int cose_mac_read(cose_crypt_context * ctx,
+int cose_mac0_read(cose_crypt_context * ctx,
         const uint8_t * obj, size_t len_obj, 
         const uint8_t * aad, size_t len_aad,
         uint8_t * pld, size_t * len_pld);

@@ -1,5 +1,5 @@
-#define COSE_SELF_TEST
-#ifdef COSE_SELF_TEST
+#define CONFIG_COSE_TEST
+#ifdef CONFIG_COSE_TEST
 
 #include <ztest.h>
 #include "cose.h"
@@ -26,7 +26,7 @@ void cose_test_sign_write(void) {
 
     zassert_false(cose_sign_write(&ctx, 
                 pld, len_pld, aad, len_aad, obj, &len_obj), 
-            "Failed to sign COSE object.\n"); 
+            "Failed to encode COSE object.\n"); 
 
     cose_sign_free(&ctx);
 }
@@ -66,7 +66,7 @@ void cose_test_encrypt0_write(void) {
 
     zassert_false(cose_encrypt0_write(&ctx, 
                 pld, len_pld, aad, len_aad, iv, sizeof(iv), obj, &len_obj), 
-            "Failed to encrypt COSE object.\n"); 
+            "Failed to encode COSE object.\n"); 
 
     cose_crypt_free(&ctx);
 }
@@ -89,7 +89,17 @@ void cose_test_encrypt0_read(void) {
     zassert_false(strcmp(out, pld),
             "Failed to decode COSE payload.\n");
 
+    cose_crypt_free(&ctx);
+}
+
+void cose_test_mac0_write(void) {
+    printk("WARNING - This test has not been implemented.\n");
+    zassert_false(0, "");
+}
+
+void cose_test_mac0_read(void) {
+    printk("WARNING - This test has not been implemented.\n");
     zassert_false(0, ""); 
 }
 
-#endif
+#endif /* CONFIG_COSE_TEST */

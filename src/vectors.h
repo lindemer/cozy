@@ -1,4 +1,4 @@
-#ifdef COSE_SELF_TEST
+#ifdef CONFIG_COSE_TEST
 
 #define COSE_TEST_KEY_256_PRIV                                                  \
     "-----BEGIN EC PRIVATE KEY-----\r\n"                                        \
