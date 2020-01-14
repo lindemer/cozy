@@ -5,7 +5,7 @@
 #include <tinycbor/cbor.h>
 
 #ifndef CONFIG_MBEDTLS_CFG_FILE
-#include "mbedtls/config.h"
+#include "mbedtls/config-suite-b.h"
 #else
 #include CONFIG_MBEDTLS_CFG_FILE
 #endif

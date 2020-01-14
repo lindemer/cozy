@@ -1,5 +1,5 @@
-#include "cose.h"
-#include "shared.h"
+#include <cozy/cose.h>
+#include <cozy/shared.h>
 
 int cose_encode_protected(
         cose_key * key,

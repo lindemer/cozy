@@ -1,8 +1,7 @@
-#define CONFIG_COSE_SIGN
-#ifdef CONFIG_COSE_SIGN
+#ifdef CONFIG_COZY_SIGN
 
-#include "cose.h"
-#include "shared.h"
+#include <cozy/cose.h>
+#include <cozy/shared.h>
 
 int cose_sign_init(cose_sign_context * ctx,
         const uint8_t * key, size_t len_key,
@@ -253,4 +252,4 @@ int cose_decode_sign_object(
      return COSE_ERROR_NONE;
 }
 
-#endif /* CONFIG_COSE_SIGN */
+#endif /* CONFIG_COZY_SIGN */

@@ -1,8 +1,7 @@
-#define CONFIG_COSE_MAC
-#ifdef CONFIG_COSE_MAC
+#ifdef CONFIG_COZY_MAC
 
-#include "cose.h"
-#include "shared.h"
+#include <cozy/cose.h>
+#include <cozy/shared.h>
 
 int cose_mac0_write(cose_crypt_context *ctx,
         const uint8_t * pld, size_t len_pld, 
@@ -23,4 +22,4 @@ int cose_mac0_read(cose_crypt_context * ctx,
     return COSE_ERROR_NONE;
 }
 
-#endif /* CONFIG_COSE_MAC */
+#endif /* CONFIG_COZY_MAC */

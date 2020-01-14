@@ -1,7 +1,7 @@
 #ifndef SHARED_H
 #define SHARED_H
 
-#include "cose.h"
+#include <cozy/cose.h>
 
 int cose_encode_protected(
         cose_key * key,

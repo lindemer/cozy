@@ -1,8 +1,7 @@
-#define CONFIG_COSE_ENCRYPT
-#ifdef CONFIG_COSE_ENCRYPT
+#ifdef CONFIG_COZY_ENCRYPT
 
-#include "cose.h"
-#include "shared.h"
+#include <cozy/cose.h>
+#include <cozy/shared.h>
 
 int cose_crypt_encipher(
         cose_crypt_context * ctx,
@@ -211,5 +210,5 @@ int cose_decode_encrypt0_object(
      return COSE_ERROR_NONE;
 }
 
-#endif /* CONFIG_COSE_ENCRYPT */
+#endif /* CONFIG_COZY_ENCRYPT */
 

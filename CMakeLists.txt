@@ -1,6 +1,20 @@
-cmake_minimum_required(VERSION 3.13.1)
-include($ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
-project(cozy)
+zephyr_interface_library_named(cozy)
+set(WITH_ZEPHYR 1)
+set(WITH_ZEPHYR_LIB 1)
+target_include_directories(cozy INTERFACE include)
 
-FILE(GLOB app_sources src/*.c)
-target_sources(app PRIVATE ${app_sources})
+zephyr_library()
+zephyr_library_sources(
+    src/sign.c
+    src/encrypt.c
+    src/mac.c
+    src/shared.c
+    )
+zephyr_library_link_libraries(cozy)
+zephyr_include_directories(include)
+
+target_link_libraries(cozy INTERFACE 
+    zephyr_interface
+    TINYCBOR
+    mbedTLS
+    )

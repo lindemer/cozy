@@ -2,7 +2,7 @@
 #ifdef CONFIG_COSE_TEST
 
 #include <ztest.h>
-#include "cose.h"
+#include <cozy/cose.h>
 #include "vectors.h"
 
 const uint8_t * pld = COSE_TEST_PLD;
@@ -13,7 +13,7 @@ uint8_t out[4096];
 size_t len_obj;
 size_t len_out;
 
-void cose_test_sign_write(void) {
+void test_cose_sign_write(void) {
     const uint8_t * key = COSE_TEST_KEY_256_PRIV;
 
     size_t len_pld = strlen(pld);
@@ -31,7 +31,7 @@ void cose_test_sign_write(void) {
     cose_sign_free(&ctx);
 }
 
-void cose_test_sign_read(void) {
+void test_cose_sign_read(void) {
     const uint8_t * key = COSE_TEST_KEY_256_PUB;
     
     size_t len_aad = strlen(aad);
@@ -51,7 +51,7 @@ void cose_test_sign_read(void) {
     cose_verify_free(&ctx);
 }
 
-void cose_test_encrypt0_write(void) {
+void test_cose_encrypt0_write(void) {
     const uint8_t key[16] = COSE_TEST_KEY_128_SYM;
     const uint8_t iv[12] = COSE_TEST_IV;
     cose_alg alg = cose_alg_aes_gcm_128;
@@ -71,7 +71,7 @@ void cose_test_encrypt0_write(void) {
     cose_crypt_free(&ctx);
 }
 
-void cose_test_encrypt0_read(void) {
+void test_cose_encrypt0_read(void) {
     const uint8_t key[16] = COSE_TEST_KEY_128_SYM;
     cose_alg alg = cose_alg_aes_gcm_128;
 
@@ -92,12 +92,12 @@ void cose_test_encrypt0_read(void) {
     cose_crypt_free(&ctx);
 }
 
-void cose_test_mac0_write(void) {
+void test_cose_mac0_write(void) {
     printk("WARNING - This test has not been implemented.\n");
     zassert_false(0, "");
 }
 
-void cose_test_mac0_read(void) {
+void test_cose_mac0_read(void) {
     printk("WARNING - This test has not been implemented.\n");
     zassert_false(0, ""); 
 }

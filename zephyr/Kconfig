@@ -1,0 +1,23 @@
+menuconfig COZY
+    bool "cozy Support"
+    select MCUMGR 
+    select TINYCBOR
+    select MBEDTLS
+    help
+        This option enables the cozy COSE library.
+
+if COZY
+
+config COZY_SIGN
+    bool "Compile COSE sign sources"
+    default y
+
+config COZY_ENCRYPT
+    bool "Compile COSE encrypt sources"
+    default y
+
+config COZY_MAC
+    bool "Compile COSE mac sources"
+    default y     
+
+endif
