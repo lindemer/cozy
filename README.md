@@ -1,7 +1,7 @@
 # Cozy
 **Cozy** can be linked as an external module to any Zephyr app. This library is built on [mbedTLS](https://github.com/zephyrproject-rtos/mbedtls) and [TinyCBOR](https://github.com/zephyrproject-rtos/tinycbor).
 
-## Current Coverage of RFC 8152
+## Current coverage of RFC 8152
 * Encode/decode COSE Sign objects with single signer
 * Encode/decode COSE Encrypt0 objects
 * EC signature algorithms: NIST P-256, NIST P-384
@@ -18,10 +18,10 @@ Add the following line to your app's `prj.conf` to compile the required mbedTLS 
 
 Access the **Cozy** API from your source files with `#include <cozy/cose.h>`.
 
-## Tests and Examples
+## Tests and examples
 Run tests from the `tests` directory with `west build -t run -b native_posix`. See unit tests in `tests/src/tests.c` for examples. The `tests/CMakeLists.txt` assumes that this repository has been cloned to `$ZEPHYR_BASE/..` (i.e., the directory containing your `.west` file).
 
-## Project Roadmap
+## Project roadmap
 * Support for ECDH key agreement algorithms
 * Support for countersignatures
 * Support for NSA Suite B algorithms listed in [RFC 6460](https://tools.ietf.org/html/rfc6460)
