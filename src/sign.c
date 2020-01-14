@@ -4,8 +4,8 @@
 #include <cozy/shared.h>
 
 int cose_sign_init(cose_sign_context * ctx,
-        const uint8_t * key, size_t len_key,
-        const uint8_t * kid, size_t len_kid) 
+        const uint8_t * key, const size_t len_key,
+        const uint8_t * kid, const size_t len_kid) 
 {
     mbedtls_entropy_init(&ctx->entropy);
     mbedtls_ctr_drbg_init(&ctx->ctr_drbg);
@@ -36,8 +36,8 @@ int cose_sign_init(cose_sign_context * ctx,
 }
 
 int cose_verify_init(cose_verify_context * ctx,
-        const uint8_t * key, size_t len_key,
-        const uint8_t * kid, size_t len_kid) 
+        const uint8_t * key, const size_t len_key,
+        const uint8_t * kid, const size_t len_kid) 
 {
     ctx->key.len_kid = len_kid;
     memcpy(ctx->key.kid, kid, len_kid);
@@ -73,8 +73,8 @@ void cose_verify_free(cose_verify_context * ctx)
 }
 
 int cose_sign_write(cose_sign_context * ctx, 
-        const uint8_t * pld, size_t len_pld, 
-        const uint8_t * aad, size_t len_aad,
+        const uint8_t * pld, const size_t len_pld, 
+        const uint8_t * aad, const size_t len_aad,
         uint8_t * obj, size_t * len_obj) 
 {
 
@@ -100,8 +100,8 @@ int cose_sign_write(cose_sign_context * ctx,
 }
 
 int cose_sign_read(cose_verify_context * ctx, 
-        const uint8_t * obj, size_t len_obj, 
-        const uint8_t * aad, size_t len_aad,
+        const uint8_t * obj, const size_t len_obj, 
+        const uint8_t * aad, const size_t len_aad,
         uint8_t * pld, size_t * len_pld) 
 {
 
@@ -127,8 +127,8 @@ int cose_sign_read(cose_verify_context * ctx,
 }
 int cose_encode_sign_tbs(
         cose_key * key,
-        const uint8_t * pld, size_t len_pld, 
-        const uint8_t * aad, size_t len_aad,
+        const uint8_t * pld, const size_t len_pld, 
+        const uint8_t * aad, const size_t len_aad,
         uint8_t * tbs, size_t * len_tbs) 
 {
     size_t len_pro = 8;
@@ -156,9 +156,9 @@ int cose_encode_sign_tbs(
 
 int cose_encode_sign_object(
         cose_key * key,
-        const uint8_t * pld, size_t len_pld, 
-        const uint8_t * aad, size_t len_aad,
-        const uint8_t * sig, size_t len_sig,
+        const uint8_t * pld, const size_t len_pld, 
+        const uint8_t * aad, const size_t len_aad,
+        const uint8_t * sig, const size_t len_sig,
         uint8_t * obj, size_t * len_obj) 
 {
     size_t len_pro = 8;
@@ -196,7 +196,7 @@ int cose_encode_sign_object(
 }
 
 int cose_decode_sign_payload(
-        const uint8_t * obj, size_t len_obj,
+        const uint8_t * obj, const size_t len_obj,
         uint8_t * pld, size_t * len_pld) 
 {
     CborParser parser;
@@ -216,8 +216,8 @@ int cose_decode_sign_payload(
 
 int cose_decode_sign_object(
         cose_key * key,
-        const uint8_t * obj, size_t len_obj,
-        const uint8_t * aad, size_t len_aad,
+        const uint8_t * obj, const size_t len_obj,
+        const uint8_t * aad, const size_t len_aad,
         uint8_t * tbs, size_t * len_tbs,
         uint8_t * sig, size_t * len_sig) 
 {

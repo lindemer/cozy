@@ -1,6 +1,3 @@
-#define CONFIG_COSE_TEST
-#ifdef CONFIG_COSE_TEST
-
 #include <ztest.h>
 #include <cozy/cose.h>
 #include "vectors.h"
@@ -101,5 +98,3 @@ void test_cose_mac0_read(void) {
     printk("WARNING - This test has not been implemented.\n");
     zassert_false(0, ""); 
 }
-
-#endif /* CONFIG_COSE_TEST */

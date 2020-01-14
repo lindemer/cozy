@@ -203,51 +203,51 @@ typedef struct {
 } cose_crypt_context;
 
 int cose_sign_init(cose_sign_context * ctx,
-        const uint8_t * key, size_t len_key,
-        const uint8_t * kid, size_t len_kid);
+        const uint8_t * key, const size_t len_key,
+        const uint8_t * kid, const size_t len_kid);
 
 int cose_verify_init(cose_verify_context * ctx,
-        const uint8_t * key, size_t len_key,
-        const uint8_t * kid, size_t len_kid);
+        const uint8_t * key, const size_t len_key,
+        const uint8_t * kid, const size_t len_kid);
 
 int cose_crypt_init(cose_crypt_context * ctx,
         const uint8_t * key, cose_alg alg,
-        const uint8_t * kid, size_t len_kid);
+        const uint8_t * kid, const size_t len_kid);
 
 void cose_sign_free(cose_sign_context * ctx);
 void cose_verify_free(cose_verify_context * ctx);
 void cose_crypt_free(cose_crypt_context * ctx);
 
 int cose_sign_write(cose_sign_context * ctx, 
-        const uint8_t * pld, size_t len_pld, 
-        const uint8_t * aad, size_t len_aad,
+        const uint8_t * pld, const size_t len_pld, 
+        const uint8_t * aad, const size_t len_aad,
         uint8_t * obj, size_t * len_obj);
 
 int cose_sign_read(cose_verify_context * ctx,
-        const uint8_t * obj, size_t len_obj, 
-        const uint8_t * aad, size_t len_aad,
+        const uint8_t * obj, const size_t len_obj, 
+        const uint8_t * aad, const size_t len_aad,
         uint8_t * pld, size_t * len_pld);
 
 int cose_encrypt0_write(cose_crypt_context *ctx,
-        const uint8_t * pld, size_t len_pld, 
-        const uint8_t * aad, size_t len_aad,
-        const uint8_t * iv, size_t len_iv,
+        const uint8_t * pld, const size_t len_pld, 
+        const uint8_t * aad, const size_t len_aad,
+        const uint8_t * iv, const size_t len_iv,
         uint8_t * obj, size_t * len_obj);
 
 int cose_encrypt0_read(cose_crypt_context * ctx,
-        const uint8_t * obj, size_t len_obj, 
-        const uint8_t * aad, size_t len_aad,
+        const uint8_t * obj, const size_t len_obj, 
+        const uint8_t * aad, const size_t len_aad,
         uint8_t * pld, size_t * len_pld);
 
 int cose_mac0_write(cose_crypt_context *ctx,
-        const uint8_t * pld, size_t len_pld, 
-        const uint8_t * aad, size_t len_aad,
-        const uint8_t * iv, size_t len_iv,
+        const uint8_t * pld, const size_t len_pld, 
+        const uint8_t * aad, const size_t len_aad,
+        const uint8_t * iv, const size_t len_iv,
         uint8_t * obj, size_t * len_obj);
 
 int cose_mac0_read(cose_crypt_context * ctx,
-        const uint8_t * obj, size_t len_obj, 
-        const uint8_t * aad, size_t len_aad,
+        const uint8_t * obj, const size_t len_obj, 
+        const uint8_t * aad, const size_t len_aad,
         uint8_t * pld, size_t * len_pld);
 
 #endif /* COSE_H */

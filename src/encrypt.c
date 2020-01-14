@@ -44,7 +44,7 @@ int cose_crypt_decipher(
 
 int cose_crypt_init(cose_crypt_context * ctx,
         const uint8_t * key, cose_alg alg,
-        const uint8_t * kid, size_t len_kid) 
+        const uint8_t * kid, const size_t len_kid) 
 {
     ctx->key.alg = alg;
     ctx->cipher = MBEDTLS_CIPHER_ID_AES;
@@ -71,9 +71,9 @@ int cose_crypt_init(cose_crypt_context * ctx,
 }
 
 int cose_encrypt0_write(cose_crypt_context *ctx,
-        const uint8_t * pld, size_t len_pld, 
-        const uint8_t * aad, size_t len_aad,
-        const uint8_t * iv, size_t len_iv,
+        const uint8_t * pld, const size_t len_pld, 
+        const uint8_t * aad, const size_t len_aad,
+        const uint8_t * iv, const size_t len_iv,
         uint8_t * obj, size_t * len_obj) 
 {
     size_t len_enc = len_pld + ctx->len_mac;
@@ -95,8 +95,8 @@ int cose_encrypt0_write(cose_crypt_context *ctx,
 }
 
 int cose_encrypt0_read(cose_crypt_context * ctx,
-        const uint8_t * obj, size_t len_obj, 
-        const uint8_t * aad, size_t len_aad,
+        const uint8_t * obj, const size_t len_obj, 
+        const uint8_t * aad, const size_t len_aad,
         uint8_t * pld, size_t * len_pld) 
 {
     size_t len_enc = len_obj;
@@ -127,7 +127,7 @@ void cose_crypt_free(cose_crypt_context * ctx)
 
 int cose_encode_encrypt0_tbe(
         cose_key * key,
-        const uint8_t * aad, size_t len_aad,
+        const uint8_t * aad, const size_t len_aad,
         uint8_t * tbe, size_t * len_tbe)
 {
     size_t len_pro = 8;
@@ -153,8 +153,8 @@ int cose_encode_encrypt0_tbe(
 
 int cose_encode_encrypt0_object(
         cose_key * key,
-        const uint8_t * enc, size_t len_enc, 
-        const uint8_t * iv, size_t len_iv,
+        const uint8_t * enc, const size_t len_enc, 
+        const uint8_t * iv, const size_t len_iv,
         uint8_t * obj, size_t * len_obj) 
 {
     size_t len_pro = 8;
@@ -183,7 +183,7 @@ int cose_encode_encrypt0_object(
 } 
 
 int cose_decode_encrypt0_object(
-        const uint8_t * obj, size_t len_obj,
+        const uint8_t * obj, const size_t len_obj,
         uint8_t * enc, size_t * len_enc,
         uint8_t * iv, size_t * len_iv)
 {
