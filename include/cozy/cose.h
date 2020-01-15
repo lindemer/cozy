@@ -177,6 +177,16 @@ typedef enum {
     cose_curve_ed448 = 7,
 } cose_curve;
 
+typedef enum {
+    cwt_claim_iss = 1,  /* Issuer */
+    cwt_claim_sub = 2,  /* Subject */
+    cwt_claim_aud = 3,  /* Audience */
+    cwt_claim_exp = 4,  /* Expiration Time */
+    cwt_claim_nbf = 5,  /* Not Before */
+    cwt_claim_iat = 6,  /* Issued At */
+    cwt_claim_cti = 7,  /* CWT ID */
+} cwt_claim;
+
 /**
  * @brief Crypto key info structure
  *
