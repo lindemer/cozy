@@ -12,8 +12,9 @@ Add the following line to your app's `CMakeLists.txt`:
 
     set(ZEPHYR_EXTRA_MODULES <absolute_path_to>/cozy)
 
-Add the following line to your app's `prj.conf` to compile the required mbedTLS sources:
+Add the following lines to your app's `prj.conf`:
 
+    CONFIG_COZY=y
     CONFIG_MBEDTLS_CFG_FILE="config-suite-b.h"
 
 Access the **Cozy** API from your source files with `#include <cozy/cose.h>`.
