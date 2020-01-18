@@ -148,7 +148,7 @@ int cose_encode_sign_tbs(
     cbor_encode_byte_string(&encoder_arr0, pld, len_pld);                       // payload
     cbor_encoder_close_container(&encoder_obj0, &encoder_arr0);
 
-    CBOR_WRITE_RETURN(&encoder_obj0, tbs, *len_tbs)
+    return cose_encode_final(&encoder_obj0, tbs, len_tbs);
 }
 
 int cose_encode_sign_object(
@@ -184,7 +184,7 @@ int cose_encode_sign_object(
     cbor_encoder_close_container(&encoder_arr0, &encoder_arr1);
     cbor_encoder_close_container(&encoder_obj0, &encoder_arr0);
 
-    CBOR_WRITE_RETURN(&encoder_obj0, obj, *len_obj)
+    return cose_encode_final(&encoder_obj0, obj, len_obj);
 }
 
 int cose_decode_sign_payload(
@@ -200,7 +200,7 @@ int cose_decode_sign_payload(
     cbor_value_advance(&par1);                                                  // unprotected 
     cbor_value_advance(&par1);                                                  // payload
     
-    CBOR_READ_RETURN(&par1, pld, len_pld)
+    return cose_decode_final(&par1, pld, len_pld);
 }
 
 int cose_decode_sign_object(
@@ -234,7 +234,7 @@ int cose_decode_sign_object(
     cbor_value_advance(&par3);                                                  // unprotected
     cbor_value_advance(&par3);                                                  // signature
 
-    CBOR_READ_RETURN(&par3, sig, len_sig)
+    return cose_decode_final(&par3, sig, len_sig);
 }
 
 #endif /* CONFIG_COZY_SIGN */

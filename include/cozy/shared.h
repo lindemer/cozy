@@ -11,21 +11,13 @@
     cbor_encode_int(encoder, key);                                      \
     cbor_encode_byte_string(encoder, val, len);
 
-#define CBOR_WRITE_RETURN(encoder, out, len_out)                        \
-    if (cbor_encoder_get_extra_bytes_needed(encoder))                   \
-        return COSE_ERROR_OVERFLOW;                                     \
-    len_out = cbor_encoder_get_buffer_size(encoder, out);               \
-    return COSE_ERROR_NONE;
+int cose_encode_final(
+        CborEncoder * encoder, 
+        uint8_t * out, size_t * len_out);
 
-#define CBOR_READ_RETURN(val, out, len_out)                             \
-    int TEMP;                                                           \
-    cbor_value_get_string_length(val, &TEMP);                           \
-    if (*len_out < TEMP) return COSE_ERROR_OVERFLOW;                    \
-    *len_out = TEMP;                                                    \
-    if (cbor_value_copy_byte_string(val, out, len_out, val)             \
-            != CborNoError)                                             \
-        return COSE_ERROR_DECODE;                                       \
-     return COSE_ERROR_NONE;
+int cose_decode_final(
+        CborValue * decoder, 
+        uint8_t * out, size_t * len_out);
 
 int cose_encode_protected(
         cose_key * key,

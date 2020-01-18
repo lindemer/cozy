@@ -112,7 +112,8 @@ int cose_encrypt0_read(cose_crypt_context * ctx,
         return COSE_ERROR_ENCODE;
 
     if (cose_decode_encrypt0_object(obj, len_obj, enc, &len_enc, iv, &len_iv))
-        return COSE_ERROR_DECODE; 
+        return COSE_ERROR_DECODE;
+   DUMP(len_iv) 
 
     if (cose_crypt_decipher(ctx, enc, len_enc, tbe, len_tbe, iv, len_iv, pld, len_pld))
         return COSE_ERROR_DECRYPT;
@@ -144,7 +145,7 @@ int cose_encode_encrypt0_tbe(
     cbor_encode_byte_string(&encoder_arr0, aad, len_aad);                       // external_aad
     cbor_encoder_close_container(&encoder_obj0, &encoder_arr0);
 
-    CBOR_WRITE_RETURN(&encoder_obj0, tbe, *len_tbe)
+    return cose_encode_final(&encoder_obj0, tbe, len_tbe);
 }
 
 int cose_encode_encrypt0_object(
@@ -171,7 +172,7 @@ int cose_encode_encrypt0_object(
     cbor_encode_byte_string(&encoder_arr0, enc, len_enc);                       // ciphertext
     cbor_encoder_close_container(&encoder_obj0, &encoder_arr0);
 
-    CBOR_WRITE_RETURN(&encoder_obj0, obj, *len_obj)
+    return cose_encode_final(&encoder_obj0, obj, len_obj);
 } 
 
 int cose_decode_encrypt0_object(
@@ -205,13 +206,7 @@ int cose_decode_encrypt0_object(
     if (!got_iv) return COSE_ERROR_DECODE;
     cbor_value_leave_container(&par1, &par2);
 
-    //CBOR_READ_RETURN(&par1, enc, len_enc);
-
-    if (cbor_value_copy_byte_string(&par1, enc, len_enc, &par1) != CborNoError)
-        return COSE_ERROR_TINYCBOR;
-    
-     return COSE_ERROR_NONE;
+    return cose_decode_final(&par1, enc, len_enc);
 }
-
 #endif /* CONFIG_COZY_ENCRYPT */
 
