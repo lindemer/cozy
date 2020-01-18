@@ -106,8 +106,8 @@ int cose_sign_read(cose_verify_context * ctx,
 {
 
     size_t len_temp = *len_pld;
-    size_t len_sig;
-    uint8_t sig[384];
+    size_t len_sig = 256;
+    uint8_t sig[256];
     uint8_t hash[128];
 
     if (cose_decode_sign_object(&ctx->key, obj, len_obj, aad, len_aad, 

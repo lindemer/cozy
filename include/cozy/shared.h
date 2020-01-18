@@ -18,7 +18,10 @@
     return COSE_ERROR_NONE;
 
 #define CBOR_READ_RETURN(val, out, len_out)                             \
-    cbor_value_get_string_length(val, len_out);                         \
+    int TEMP;                                                           \
+    cbor_value_get_string_length(val, &TEMP);                           \
+    if (*len_out < TEMP) return COSE_ERROR_OVERFLOW;                    \
+    *len_out = TEMP;                                                    \
     if (cbor_value_copy_byte_string(val, out, len_out, val)             \
             != CborNoError)                                             \
         return COSE_ERROR_DECODE;                                       \
