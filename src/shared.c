@@ -9,8 +9,7 @@ int cose_encode_protected(
 
     cbor_encoder_init(&encoder_pro0, pro, *len_pro, 0);
     cbor_encoder_create_map(&encoder_pro0, &encoder_map0, 1);
-    cbor_encode_int(&encoder_map0, cose_header_algorithm); 
-    cbor_encode_int(&encoder_map0, key->alg);
+    CBOR_MAP_INT(&encoder_map0, cose_header_algorithm, key->alg);
     cbor_encoder_close_container(&encoder_pro0, &encoder_map0);
 
     if (cbor_encoder_get_extra_bytes_needed(&encoder_pro0)) 

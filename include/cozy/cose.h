@@ -28,6 +28,7 @@
 #define COSE_CONTEXT_REC_RECIPIENT "Rec_Recipient"
 
 #define COSE_ENTROPY_SEED "This should be unique for every device."
+#define DUMP(var) printk("%s = 0x%x\n", #var, var);
 
 /** 
  * @brief COSE API

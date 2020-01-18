@@ -125,6 +125,7 @@ int cose_sign_read(cose_verify_context * ctx,
 
     return COSE_ERROR_NONE;
 }
+
 int cose_encode_sign_tbs(
         cose_key * key,
         const uint8_t * pld, const size_t len_pld, 
@@ -147,11 +148,7 @@ int cose_encode_sign_tbs(
     cbor_encode_byte_string(&encoder_arr0, pld, len_pld);                       // payload
     cbor_encoder_close_container(&encoder_obj0, &encoder_arr0);
 
-    if (cbor_encoder_get_extra_bytes_needed(&encoder_obj0)) 
-        return COSE_ERROR_TINYCBOR;
-    *len_tbs = cbor_encoder_get_buffer_size(&encoder_obj0, tbs);
-
-     return COSE_ERROR_NONE;
+    CBOR_WRITE_RETURN(&encoder_obj0, tbs, *len_tbs)
 }
 
 int cose_encode_sign_object(
@@ -180,19 +177,14 @@ int cose_encode_sign_object(
     cose_encode_protected(key, pro, &len_pro);                                  // sign_protected
     cbor_encode_byte_string(&encoder_arr0, pro, len_pro);
     cbor_encoder_create_map(&encoder_arr2, &encoder_map0, 1);                   // unprotected
-    cbor_encode_int(&encoder_map0, cose_header_kid);                            // kid
-    cbor_encode_byte_string(&encoder_map0, key->kid, key->len_kid);
+    CBOR_MAP_BYTES(&encoder_map0, cose_header_kid, key->kid, key->len_kid)
     cbor_encoder_close_container(&encoder_arr2, &encoder_map0);
     cbor_encode_byte_string(&encoder_arr1, sig, len_sig);                       // signature
     cbor_encoder_close_container(&encoder_arr1, &encoder_arr2);
     cbor_encoder_close_container(&encoder_arr0, &encoder_arr1);
     cbor_encoder_close_container(&encoder_obj0, &encoder_arr0);
 
-    if (cbor_encoder_get_extra_bytes_needed(&encoder_obj0)) 
-        return COSE_ERROR_TINYCBOR;
-    *len_obj = cbor_encoder_get_buffer_size(&encoder_obj0, obj);
-
-     return COSE_ERROR_NONE;
+    CBOR_WRITE_RETURN(&encoder_obj0, obj, *len_obj)
 }
 
 int cose_decode_sign_payload(
@@ -207,11 +199,8 @@ int cose_decode_sign_payload(
     cbor_value_enter_container(&par0, &par1);                                   // protected
     cbor_value_advance(&par1);                                                  // unprotected 
     cbor_value_advance(&par1);                                                  // payload
-
-    if (cbor_value_copy_byte_string(&par1, pld, len_pld, &par1) != CborNoError) 
-        return COSE_ERROR_TINYCBOR;
-
-     return COSE_ERROR_NONE;
+    
+    CBOR_READ_RETURN(&par1, pld, len_pld)
 }
 
 int cose_decode_sign_object(
@@ -245,11 +234,7 @@ int cose_decode_sign_object(
     cbor_value_advance(&par3);                                                  // unprotected
     cbor_value_advance(&par3);                                                  // signature
 
-    cbor_value_get_string_length(&par3, len_sig);
-    if (cbor_value_copy_byte_string(&par3, sig, len_sig, &par3) != CborNoError) 
-        return COSE_ERROR_TINYCBOR;
-    
-     return COSE_ERROR_NONE;
+    CBOR_READ_RETURN(&par3, sig, len_sig)
 }
 
 #endif /* CONFIG_COZY_SIGN */

@@ -42,7 +42,7 @@ void test_cose_sign_read(void) {
                 obj, len_obj, aad, len_aad, out, &len_out), 
             "Failed to authenticate signature.\n"); 
 
-    zassert_false(strcmp(out, pld),
+    zassert_false(memcmp(out, pld, strlen(pld)),
             "Failed to decode payload.\n");
 
     cose_verify_free(&ctx);
@@ -79,11 +79,13 @@ void test_cose_encrypt0_read(void) {
     zassert_false(cose_crypt_init(&ctx, key, alg, NULL, 0),
             "Failed to initialize COSE encryption context.\n");
 
+    for (int i = 0; i < len_out; i++) out[i] = '\0';
+
     zassert_false(cose_encrypt0_read(&ctx, 
                 obj, len_obj, aad, len_aad, out, &len_out), 
             "Failed to decrypt COSE payload.\n"); 
 
-    zassert_false(strcmp(out, pld),
+    zassert_false(memcmp(out, pld, strlen(pld)),
             "Failed to decode COSE payload.\n");
 
     cose_crypt_free(&ctx);

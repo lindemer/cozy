@@ -144,11 +144,7 @@ int cose_encode_encrypt0_tbe(
     cbor_encode_byte_string(&encoder_arr0, aad, len_aad);                       // external_aad
     cbor_encoder_close_container(&encoder_obj0, &encoder_arr0);
 
-    if (cbor_encoder_get_extra_bytes_needed(&encoder_obj0)) 
-        return COSE_ERROR_TINYCBOR;
-    *len_tbe = cbor_encoder_get_buffer_size(&encoder_obj0, tbe);
-
-     return COSE_ERROR_NONE;
+    CBOR_WRITE_RETURN(&encoder_obj0, tbe, *len_tbe)
 }
 
 int cose_encode_encrypt0_object(
@@ -169,19 +165,13 @@ int cose_encode_encrypt0_object(
     cose_encode_protected(key, pro, &len_pro);                                  // protected
     cbor_encode_byte_string(&encoder_arr0, pro, len_pro);
     cbor_encoder_create_map(&encoder_arr0, &encoder_map0, 2);                   // unprotected
-    cbor_encode_int(&encoder_map0, cose_header_kid);
-    cbor_encode_byte_string(&encoder_map0, key->kid, key->len_kid);             // kid
-    cbor_encode_int(&encoder_map0, cose_header_iv);
-    cbor_encode_byte_string(&encoder_map0, iv, len_iv);                         // iv 
+    CBOR_MAP_BYTES(&encoder_map0, cose_header_kid, key->kid, key->len_kid)
+    CBOR_MAP_BYTES(&encoder_map0, cose_header_iv, iv, len_iv)
     cbor_encoder_close_container(&encoder_arr0, &encoder_map0);
     cbor_encode_byte_string(&encoder_arr0, enc, len_enc);                       // ciphertext
     cbor_encoder_close_container(&encoder_obj0, &encoder_arr0);
 
-    if (cbor_encoder_get_extra_bytes_needed(&encoder_obj0)) 
-        return COSE_ERROR_TINYCBOR;
-    *len_obj = cbor_encoder_get_buffer_size(&encoder_obj0, obj);
-
-     return COSE_ERROR_NONE;
+    CBOR_WRITE_RETURN(&encoder_obj0, obj, *len_obj)
 } 
 
 int cose_decode_encrypt0_object(
@@ -214,6 +204,8 @@ int cose_decode_encrypt0_object(
     }
     if (!got_iv) return COSE_ERROR_DECODE;
     cbor_value_leave_container(&par1, &par2);
+
+    //CBOR_READ_RETURN(&par1, enc, len_enc);
 
     if (cbor_value_copy_byte_string(&par1, enc, len_enc, &par1) != CborNoError)
         return COSE_ERROR_TINYCBOR;
