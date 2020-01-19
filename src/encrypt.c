@@ -113,7 +113,6 @@ int cose_encrypt0_read(cose_crypt_context * ctx,
 
     if (cose_decode_encrypt0_object(obj, len_obj, enc, &len_enc, iv, &len_iv))
         return COSE_ERROR_DECODE;
-   DUMP(len_iv) 
 
     if (cose_crypt_decipher(ctx, enc, len_enc, tbe, len_tbe, iv, len_iv, pld, len_pld))
         return COSE_ERROR_DECRYPT;
