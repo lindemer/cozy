@@ -20,16 +20,17 @@ int cose_sign_init(cose_sign_context * ctx,
     mbedtls_pk_init(&ctx->pk);
     if (mbedtls_pk_parse_key(&ctx->pk, key, len_key + 1, NULL, 0)) 
         return COSE_ERROR_MBEDTLS;
+
+    ctx->len_hash = mbedtls_pk_get_bitlen(&ctx->pk) / 8;
     if (mbedtls_pk_get_type(&ctx->pk) == MBEDTLS_PK_ECKEY) { 
-        if (mbedtls_pk_get_bitlen(&ctx->pk) == 256) {
+        if (ctx->len_hash == 32) {
             ctx->key.alg = cose_alg_ecdsa_sha_256;
             ctx->md_alg = MBEDTLS_MD_SHA256;
-        } else if (mbedtls_pk_get_bitlen(&ctx->pk) == 384) {
+            ctx->len_sig = 72;
+        } else if (ctx->len_hash == 48) {
             ctx->key.alg = cose_alg_ecdsa_sha_384;
             ctx->md_alg = MBEDTLS_MD_SHA384;
-        } else if (mbedtls_pk_get_bitlen(&ctx->pk) == 512) {
-            ctx->key.alg = cose_alg_ecdsa_sha_512;
-            ctx->md_alg = MBEDTLS_MD_SHA512;
+            ctx->len_sig = 104;
         } else return COSE_ERROR_UNSUPPORTED;
     } else return COSE_ERROR_UNSUPPORTED;
     return COSE_ERROR_NONE;
@@ -45,16 +46,16 @@ int cose_verify_init(cose_verify_context * ctx,
     mbedtls_pk_init(&ctx->pk);
     if (mbedtls_pk_parse_public_key(&ctx->pk, key, len_key + 1)) 
         return COSE_ERROR_MBEDTLS;
+    ctx->len_hash = mbedtls_pk_get_bitlen(&ctx->pk) / 8;
     if (mbedtls_pk_get_type(&ctx->pk) == MBEDTLS_PK_ECKEY) { 
-        if (mbedtls_pk_get_bitlen(&ctx->pk) == 256) {
+        if (ctx->len_hash == 32) {
             ctx->key.alg = cose_alg_ecdsa_sha_256;
             ctx->md_alg = MBEDTLS_MD_SHA256;
-        } else if (mbedtls_pk_get_bitlen(&ctx->pk) == 384) {
+            ctx->len_sig = 72;
+        } else if (ctx->len_hash == 48) {
             ctx->key.alg = cose_alg_ecdsa_sha_384;
             ctx->md_alg = MBEDTLS_MD_SHA384;
-        } else if (mbedtls_pk_get_bitlen(&ctx->pk) == 512) {
-            ctx->key.alg = cose_alg_ecdsa_sha_512;
-            ctx->md_alg = MBEDTLS_MD_SHA512;
+            ctx->len_sig = 104;
         } else return COSE_ERROR_UNSUPPORTED;
     } else return COSE_ERROR_UNSUPPORTED;
     return COSE_ERROR_NONE;
@@ -77,10 +78,9 @@ int cose_sign_write(cose_sign_context * ctx,
         const uint8_t * aad, const size_t len_aad,
         uint8_t * obj, size_t * len_obj) 
 {
-
     size_t len_temp = *len_obj;
-    uint8_t hash[128];
-    uint8_t sig[384];
+    uint8_t hash[ctx->len_hash];
+    uint8_t sig[ctx->len_sig];
 
     if (cose_encode_sign_tbs(&ctx->key, pld, len_pld, aad, len_aad, obj, &len_temp)) 
         return COSE_ERROR_ENCODE;
@@ -104,20 +104,18 @@ int cose_sign_read(cose_verify_context * ctx,
         const uint8_t * aad, const size_t len_aad,
         uint8_t * pld, size_t * len_pld) 
 {
-
     size_t len_temp = *len_pld;
-    size_t len_sig = 256;
-    uint8_t sig[256];
-    uint8_t hash[128];
+    uint8_t sig[ctx->len_sig];
+    uint8_t hash[ctx->len_hash];
 
     if (cose_decode_sign_object(&ctx->key, obj, len_obj, aad, len_aad, 
-                pld, &len_temp, sig, &len_sig))
+                pld, &len_temp, sig, &ctx->len_sig))
         return COSE_ERROR_DECODE;
 
     if (mbedtls_md(mbedtls_md_info_from_type(ctx->md_alg), pld, len_temp, hash)) 
         return COSE_ERROR_HASH;
 
-    if (mbedtls_pk_verify(&ctx->pk, ctx->md_alg, hash, 0, sig, len_sig))
+    if (mbedtls_pk_verify(&ctx->pk, ctx->md_alg, hash, 0, sig, ctx->len_sig))
         return COSE_ERROR_AUTHENTICATE;
 
     if (cose_decode_sign_payload(obj, len_obj, pld, len_pld)) 

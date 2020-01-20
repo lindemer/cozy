@@ -28,7 +28,7 @@
 #define COSE_CONTEXT_REC_RECIPIENT "Rec_Recipient"
 
 #define COSE_ENTROPY_SEED "This should be unique for every device."
-#define DUMP(var) printk("%s = 0x%x\n", #var, var);
+#define DUMP(var) printk("%s = %d\n", #var, var);
 
 /** 
  * @brief COSE API
@@ -209,6 +209,8 @@ typedef struct {
  * @brief Structure for mbedTLS contexts and info for signing
  *
  * @param key Key info
+ * @param len_sig Maximum length of signature with specifified alg
+ * @param len_hash Length of message digest with specified alg
  * @param pk mbedTLS public key context
  * @param md_alg mbedTLS hash function (ex: MBEDTLS_MD_SHA256)
  * @param ctr_drbg mbedTLS random context
@@ -216,6 +218,8 @@ typedef struct {
  */
 typedef struct {
     cose_key key;
+    size_t len_sig;
+    size_t len_hash;
     mbedtls_pk_context pk;
     mbedtls_md_type_t md_alg;
     mbedtls_ctr_drbg_context ctr_drbg;
@@ -226,11 +230,15 @@ typedef struct {
  * @brief COSE signature verification context
  *
  * @param key Key info
+ * @param len_sig Maximum length of signature with specifified alg
+ * @param len_hash Length of message digest with specified alg
  * @param pk mbedTLS public key context
  * @param md_alg mbedTLS hash function (ex: MBEDTLS_MD_SHA256)
  */
 typedef struct {
     cose_key key;
+    size_t len_sig;
+    size_t len_hash;
     mbedtls_pk_context pk;
     mbedtls_md_type_t md_alg;
 } cose_verify_context;
