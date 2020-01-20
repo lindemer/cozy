@@ -3,10 +3,29 @@
 #include <cozy/cose.h>
 #include <cozy/shared.h>
 
+int cose_sign_params(const size_t len_hash,
+        cose_alg * alg, mbedtls_md_type_t * md_alg,
+        size_t * len_sig)
+{
+    if (len_hash == 32) {
+        *alg = cose_alg_ecdsa_sha_256;
+        *md_alg = MBEDTLS_MD_SHA256;
+        *len_sig = 72;
+    } else if (len_hash == 48) {
+        *alg = cose_alg_ecdsa_sha_384;
+        *md_alg = MBEDTLS_MD_SHA384;
+        *len_sig = 104;
+    } else return COSE_ERROR_UNSUPPORTED;
+    return COSE_ERROR_NONE;
+}
+
 int cose_sign_init(cose_sign_context * ctx,
         const uint8_t * key, const size_t len_key,
         const uint8_t * kid, const size_t len_kid) 
 {
+    ctx->key.len_kid = len_kid;
+    memcpy(ctx->key.kid, kid, len_kid);
+
     mbedtls_entropy_init(&ctx->entropy);
     mbedtls_ctr_drbg_init(&ctx->ctr_drbg);
     if (mbedtls_ctr_drbg_seed(
@@ -14,8 +33,6 @@ int cose_sign_init(cose_sign_context * ctx,
                 &ctx->entropy, COSE_ENTROPY_SEED, 
                 strlen(COSE_ENTROPY_SEED)))
         return COSE_ERROR_MBEDTLS;
-    ctx->key.len_kid = len_kid;
-    memcpy(ctx->key.kid, kid, len_kid);
 
     mbedtls_pk_init(&ctx->pk);
     if (mbedtls_pk_parse_key(&ctx->pk, key, len_key + 1, NULL, 0)) 
@@ -23,17 +40,9 @@ int cose_sign_init(cose_sign_context * ctx,
 
     ctx->len_hash = mbedtls_pk_get_bitlen(&ctx->pk) / 8;
     if (mbedtls_pk_get_type(&ctx->pk) == MBEDTLS_PK_ECKEY) { 
-        if (ctx->len_hash == 32) {
-            ctx->key.alg = cose_alg_ecdsa_sha_256;
-            ctx->md_alg = MBEDTLS_MD_SHA256;
-            ctx->len_sig = 72;
-        } else if (ctx->len_hash == 48) {
-            ctx->key.alg = cose_alg_ecdsa_sha_384;
-            ctx->md_alg = MBEDTLS_MD_SHA384;
-            ctx->len_sig = 104;
-        } else return COSE_ERROR_UNSUPPORTED;
+        return cose_sign_params(
+                ctx->len_hash, &ctx->key.alg, &ctx->md_alg, &ctx->len_sig);
     } else return COSE_ERROR_UNSUPPORTED;
-    return COSE_ERROR_NONE;
 }
 
 int cose_verify_init(cose_verify_context * ctx,
@@ -46,19 +55,12 @@ int cose_verify_init(cose_verify_context * ctx,
     mbedtls_pk_init(&ctx->pk);
     if (mbedtls_pk_parse_public_key(&ctx->pk, key, len_key + 1)) 
         return COSE_ERROR_MBEDTLS;
+
     ctx->len_hash = mbedtls_pk_get_bitlen(&ctx->pk) / 8;
     if (mbedtls_pk_get_type(&ctx->pk) == MBEDTLS_PK_ECKEY) { 
-        if (ctx->len_hash == 32) {
-            ctx->key.alg = cose_alg_ecdsa_sha_256;
-            ctx->md_alg = MBEDTLS_MD_SHA256;
-            ctx->len_sig = 72;
-        } else if (ctx->len_hash == 48) {
-            ctx->key.alg = cose_alg_ecdsa_sha_384;
-            ctx->md_alg = MBEDTLS_MD_SHA384;
-            ctx->len_sig = 104;
-        } else return COSE_ERROR_UNSUPPORTED;
+        return cose_sign_params(
+                ctx->len_hash, &ctx->key.alg, &ctx->md_alg, &ctx->len_sig);
     } else return COSE_ERROR_UNSUPPORTED;
-    return COSE_ERROR_NONE;
 }
 
 void cose_sign_free(cose_sign_context * ctx) 
