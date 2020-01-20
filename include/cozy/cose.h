@@ -192,48 +192,41 @@ typedef enum {
  * @brief Crypto key info structure
  *
  * @param kty Key type
- * @param kid Key identifier
  * @param alg The crypto algorithm allowed for use with this key
+ * @param crv The EC curve for this key (if applicable)
+ * @param kid Key identifier
  * @param len_kid Length of key identifier in bytes
  * @paeam len_key Length of key in bytes
  */
 typedef struct {
     cose_kty kty;
-    uint8_t kid[16];
     cose_alg alg;
+    cose_curve crv;
+    uint8_t kid[16];
     size_t len_kid;
     size_t len_key;
 } cose_key;
 
 /**
- * @brief Structure for mbedTLS contexts and info for signing
+ * @brief Struct for mbedTLS contexts required for EC signing
  *
- * @param key Key info
- * @param len_sig Maximum length of signature with specifified alg
- * @param len_hash Length of message digest with specified alg
- * @param pk mbedTLS public key context
- * @param md_alg mbedTLS hash function (ex: MBEDTLS_MD_SHA256)
  * @param ctr_drbg mbedTLS random context
  * @param entropy mbedTLS entropy context
  */
 typedef struct {
-    cose_key key;
-    size_t len_sig;
-    size_t len_hash;
-    mbedtls_pk_context pk;
-    mbedtls_md_type_t md_alg;
     mbedtls_ctr_drbg_context ctr_drbg;
     mbedtls_entropy_context entropy;
-} cose_sign_context;
+} cose_entropy_context;
 
 /**
- * @brief COSE signature verification context
+ * @brief COSE signing and verification context
  *
  * @param key Key info
  * @param len_sig Maximum length of signature with specifified alg
  * @param len_hash Length of message digest with specified alg
  * @param pk mbedTLS public key context
  * @param md_alg mbedTLS hash function (ex: MBEDTLS_MD_SHA256)
+ * @param ent Pointer to uninitialized entropy context (can be NULL)
  */
 typedef struct {
     cose_key key;
@@ -241,7 +234,8 @@ typedef struct {
     size_t len_hash;
     mbedtls_pk_context pk;
     mbedtls_md_type_t md_alg;
-} cose_verify_context;
+    cose_entropy_context * ent;
+} cose_sign_context;
 
 /**
  * @brief COSE encryption and MAC context
@@ -261,7 +255,8 @@ typedef struct {
 /**
  * @brief Initialize COSE signing context
  *
- * @param ctx Pointer to the signing context
+ * @param ctx Pointer to uninitialized signing context
+ * @param ent Pointer to uninitialized entropy context (must be NULL for verification)
  * @param key Pointer to a PEM-formatted private key string
  * @param len_key Length of key string
  * @param kid Pointer to key identifier bytes
@@ -271,31 +266,16 @@ typedef struct {
  * @retval COSE_ERROR_MBEDTLS mbedTLS failed to parse key string 
  * @retval COSE_ERROR_UNSUPPORTED Crypto algorithm not supported
  */
-int cose_sign_init(cose_sign_context * ctx,
-        const uint8_t * key, const size_t len_key,
-        const uint8_t * kid, const size_t len_kid);
-
-/**
- * @brief Initialize COSE signature verification context
- *
- * @param ctx Pointer to the verification context
- * @param key Pointer to a PEM-formatted public key string
- * @param len_key Length of key string
- * @param kid Pointer to key identifier bytes
- * @param len_kid Length of key identifier
- *
- * @retval COSE_ERROR_NONE Success
- * @retval COSE_ERROR_MBEDTLS mbedTLS failed to parse key string 
- * @retval COSE_ERROR_UNSUPPORTED Crypto algorithm not supported
- */
-int cose_verify_init(cose_verify_context * ctx,
+int cose_sign_init(
+        cose_sign_context * ctx,
+        cose_entropy_context * ent,
         const uint8_t * key, const size_t len_key,
         const uint8_t * kid, const size_t len_kid);
 
 /**
  * @brief Initialize COSE encryption and MAC context
  *
- * @param ctx Pointer to the encryption and MAC context
+ * @param ctx Pointer to uninitialized encryption and MAC context
  * @param key Pointer to a PEM-formatted public key string
  * @param alg Crypto algorithm allowed for use with this key
  * @param kid Pointer to key identifier bytes
@@ -314,13 +294,6 @@ int cose_crypt_init(cose_crypt_context * ctx,
  * @param ctx Pointer to the signing context 
  */
 void cose_sign_free(cose_sign_context * ctx);
-
-/**
- * @brief Free COSE signature verification context 
- *
- * @param ctx Pointer to the signature verification context 
- */
-void cose_verify_free(cose_verify_context * ctx);
 
 /**
  * @brief Free COSE encryption and MAC context 
@@ -353,7 +326,7 @@ int cose_sign_write(cose_sign_context * ctx,
 /**
  * @brief Decode a COSE Sign object
  *
- * @param ctx Pointer to the COSE signature verification context
+ * @param ctx Pointer to the COSE signing context
  * @param obj Pointer to the encoded COSE object 
  * @param len_obj Length of encode COSE object 
  * @param aad Pointer to additionally authenticated data (can be NULL)
@@ -366,7 +339,7 @@ int cose_sign_write(cose_sign_context * ctx,
  * @retval COSE_ERROR_HASH mbedTLS failed to hash authenticated data
  * @retval COSE_ERROR_AUTHENTICATE mbedTLS failed to authenticate signature
  */
-int cose_sign_read(cose_verify_context * ctx,
+int cose_sign_read(cose_sign_context * ctx,
         const uint8_t * obj, const size_t len_obj, 
         const uint8_t * aad, const size_t len_aad,
         uint8_t * pld, size_t * len_pld);

@@ -18,7 +18,9 @@ void test_cose_sign_write(void) {
     len_obj = sizeof(obj);
 
     cose_sign_context ctx;
-    zassert_false(cose_sign_init(&ctx, key, strlen(key), kid, sizeof(kid)), 
+    cose_entropy_context ent;
+
+    zassert_false(cose_sign_init(&ctx, &ent, key, strlen(key), kid, sizeof(kid)),
             "Failed to initialize COSE signing context.\n");
 
     zassert_false(cose_sign_write(&ctx, 
@@ -34,9 +36,10 @@ void test_cose_sign_read(void) {
     size_t len_aad = strlen(aad);
     size_t len_out = sizeof(out);
     
-    cose_verify_context ctx;
-    zassert_false(cose_verify_init(&ctx, key, strlen(key), kid, sizeof(kid)), 
-            "Failed to initialize COSE verification context.\n");
+    cose_sign_context ctx;
+
+    zassert_false(cose_sign_init(&ctx, NULL, key, strlen(key), kid, sizeof(kid)), 
+            "Failed to initialize COSE signing context.\n");
 
     zassert_false(cose_sign_read(&ctx, 
                 obj, len_obj, aad, len_aad, out, &len_out), 
@@ -45,7 +48,7 @@ void test_cose_sign_read(void) {
     zassert_false(memcmp(out, pld, strlen(pld)),
             "Failed to decode payload.\n");
 
-    cose_verify_free(&ctx);
+    cose_sign_free(&ctx);
 }
 
 void test_cose_encrypt0_write(void) {
