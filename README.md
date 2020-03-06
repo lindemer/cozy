@@ -20,8 +20,8 @@ Add the following lines to your app's `prj.conf`:
 Access the **Cozy** API from your source files with `#include <cozy/cose.h>`.
 
 ## Tests and examples
-Run tests from the `tests` directory with `west build -t run -b native_posix`. See unit tests in `tests/src/tests.c` for examples. The `tests/CMakeLists.txt` assumes that this repository has been cloned to `$ZEPHYR_BASE/..` (i.e., the directory containing your `.west` file).
-
+Run tests from the `tests` directory with `west build -t run -b native_posix`. See unit tests in `tests/src/tests.c` for examples.
+ 
 ## Project roadmap
 * Support for ECDH key agreement algorithms
 * Support for countersignatures
