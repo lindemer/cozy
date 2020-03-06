@@ -12,7 +12,7 @@ Add the following line to your app's `CMakeLists.txt`:
 
     set(ZEPHYR_EXTRA_MODULES <absolute_path_to>/cozy)
 
-Add the following lined to your app's `prj.conf`:
+Add the following line to your app's `prj.conf`:
 
     CONFIG_COZY=y
 
