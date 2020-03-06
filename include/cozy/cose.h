@@ -194,6 +194,7 @@ typedef enum {
  * @param kty Key type
  * @param alg The crypto algorithm allowed for use with this key
  * @param crv The EC curve for this key (if applicable)
+ * @param op Operations permitted for this key
  * @param kid Key identifier
  * @param len_kid Length of key identifier in bytes
  * @paeam len_key Length of key in bytes
@@ -202,6 +203,7 @@ typedef struct {
     cose_kty kty;
     cose_alg alg;
     cose_curve crv;
+    cose_key_op op;
     uint8_t kid[16];
     size_t len_kid;
     size_t len_key;

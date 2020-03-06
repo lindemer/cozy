@@ -13,9 +13,11 @@ int cose_sign_init(
     memcpy(ctx->key.kid, kid, len_kid);
     mbedtls_pk_init(&ctx->pk);
     if (ent == NULL) {
+        ctx->key.op = cose_key_op_verify;
         if (mbedtls_pk_parse_public_key(&ctx->pk, key, len_key + 1)) 
             return COSE_ERROR_MBEDTLS;
     } else {
+        ctx->key.op = cose_key_op_sign;
         ctx->ent = ent;
         mbedtls_entropy_init(&ent->entropy);
         mbedtls_ctr_drbg_init(&ent->ctr_drbg);
@@ -27,12 +29,15 @@ int cose_sign_init(
         if (mbedtls_pk_parse_key(&ctx->pk, key, len_key + 1, NULL, 0)) 
             return COSE_ERROR_MBEDTLS;
     }
-    ctx->len_hash = mbedtls_pk_get_bitlen(&ctx->pk) / 8;
+    ctx->key.kty = cose_kty_ec2;
+    ctx->len_hash = mbedtls_pk_get_len(&ctx->pk);
     if (ctx->len_hash == 32) {
+        ctx->key.crv = cose_curve_p256;
         ctx->key.alg = cose_alg_ecdsa_sha_256;
         ctx->md_alg = MBEDTLS_MD_SHA256;
         ctx->len_sig = 72;
     } else if (ctx->len_hash == 48) {
+        ctx->key.crv = cose_curve_p384;
         ctx->key.alg = cose_alg_ecdsa_sha_384;
         ctx->md_alg = MBEDTLS_MD_SHA384;
         ctx->len_sig = 104;
