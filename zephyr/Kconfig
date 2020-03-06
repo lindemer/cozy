@@ -10,14 +10,17 @@ if COZY
 
 config COZY_SIGN
     bool "Compile COSE sign sources"
+    select MBEDTLS_ENTROPY_ENABLED
     default y
 
 config COZY_ENCRYPT
     bool "Compile COSE encrypt sources"
+    select MBEDTLS_CIPHER_MODE_GCM_ENABLED
     default y
 
 config COZY_MAC
     bool "Compile COSE MAC sources"
+    select MBEDTLS_CIPHER_MODE_GCM_ENABLED
     default y     
 
 endif

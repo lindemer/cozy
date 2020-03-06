@@ -37,7 +37,7 @@
 #include <tinycbor/cbor.h>
 
 #ifndef CONFIG_MBEDTLS_CFG_FILE
-#include "mbedtls/config-suite-b.h"
+#include "mbedtls/config-tls-generic.h"
 #else
 #include CONFIG_MBEDTLS_CFG_FILE
 #endif
