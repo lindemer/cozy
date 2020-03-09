@@ -30,8 +30,8 @@
 #include <mbedtls/md.h>
 #include <mbedtls/pk.h>
 #include <mbedtls/gcm.h>
-#include <mbedtls/ctr_drbg.h>
-#include <mbedtls/entropy.h>
+#include <mbedtls/ecp.h>
+#include <mbedtls/ecdsa.h>
 
 #define COSE_CONTEXT_SIGN "Signature"
 #define COSE_CONTEXT_SIGN1 "Signature1"
@@ -44,8 +44,7 @@
 #define COSE_CONTEXT_MAC_RECIPIENT "Mac_Recipient"
 #define COSE_CONTEXT_REC_RECIPIENT "Rec_Recipient"
 
-#define COSE_ENTROPY_SEED "This should be unique for every device."
-#define DUMP(var) printk("%s = %d\n", #var, var);
+#define DUMP(var) printk("%s = %x\n", #var, var);
 
 /** 
  * @brief COSE API
@@ -227,17 +226,6 @@ typedef struct {
 } cose_key;
 
 /**
- * @brief Struct for mbedTLS contexts required for EC signing
- *
- * @param ctr_drbg mbedTLS random context
- * @param entropy mbedTLS entropy context
- */
-typedef struct {
-    mbedtls_ctr_drbg_context ctr_drbg;
-    mbedtls_entropy_context entropy;
-} cose_entropy_context;
-
-/**
  * @brief COSE signing and verification context
  *
  * @param key Key info
@@ -245,7 +233,6 @@ typedef struct {
  * @param len_hash Length of message digest with specified alg
  * @param pk mbedTLS public key context
  * @param md_alg mbedTLS hash function (ex: MBEDTLS_MD_SHA256)
- * @param ent Pointer to uninitialized entropy context (can be NULL)
  */
 typedef struct {
     cose_key key;
@@ -253,7 +240,6 @@ typedef struct {
     size_t len_hash;
     mbedtls_pk_context pk;
     mbedtls_md_type_t md_alg;
-    cose_entropy_context * ent;
 } cose_sign_context;
 
 /**
@@ -275,7 +261,7 @@ typedef struct {
  * @brief Initialize COSE signing context
  *
  * @param ctx Pointer to uninitialized signing context
- * @param ent Pointer to uninitialized entropy context (must be NULL for verification)
+ * @param mode 0 for signature generation, 1 for verification
  * @param key Pointer to a PEM-formatted private key string
  * @param len_key Length of key string
  * @param kid Pointer to key identifier bytes
@@ -286,8 +272,7 @@ typedef struct {
  * @retval COSE_ERROR_UNSUPPORTED Crypto algorithm not supported
  */
 int cose_sign_init(
-        cose_sign_context * ctx,
-        cose_entropy_context * ent,
+        cose_sign_context * ctx, bool mode,
         const uint8_t * key, const size_t len_key,
         const uint8_t * kid, const size_t len_kid);
 

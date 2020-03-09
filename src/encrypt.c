@@ -18,7 +18,7 @@
 #ifdef CONFIG_COZY_ENCRYPT
 
 #include <cozy/cose.h>
-#include <cozy/shared.h>
+#include <cozy/common.h>
 
 int cose_crypt_encipher(
         cose_crypt_context * ctx,

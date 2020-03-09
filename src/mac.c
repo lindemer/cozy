@@ -18,7 +18,7 @@
 #ifdef CONFIG_COZY_MAC
 
 #include <cozy/cose.h>
-#include <cozy/shared.h>
+#include <cozy/common.h>
 
 int cose_mac0_write(cose_crypt_context *ctx,
         const uint8_t * pld, const size_t len_pld, 

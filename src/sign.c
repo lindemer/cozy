@@ -18,42 +18,35 @@
 #ifdef CONFIG_COZY_SIGN
 
 #include <cozy/cose.h>
-#include <cozy/shared.h>
+#include <cozy/common.h>
 
 int cose_sign_init(
-        cose_sign_context * ctx,
-        cose_entropy_context * ent,
+        cose_sign_context * ctx, bool mode,
         const uint8_t * key, const size_t len_key,
         const uint8_t * kid, const size_t len_kid) 
 {
     ctx->key.len_kid = len_kid;
     memcpy(ctx->key.kid, kid, len_kid);
     mbedtls_pk_init(&ctx->pk);
-    if (ent == NULL) {
+    if (mode) {
         ctx->key.op = cose_key_op_verify;
         if (mbedtls_pk_parse_public_key(&ctx->pk, key, len_key + 1)) 
             return COSE_ERROR_MBEDTLS;
     } else {
         ctx->key.op = cose_key_op_sign;
-        ctx->ent = ent;
-        mbedtls_entropy_init(&ent->entropy);
-        mbedtls_ctr_drbg_init(&ent->ctr_drbg);
-        if (mbedtls_ctr_drbg_seed(
-                    &ent->ctr_drbg, mbedtls_entropy_func, 
-                    &ent->entropy, COSE_ENTROPY_SEED, 
-                    strlen(COSE_ENTROPY_SEED)))
-            return COSE_ERROR_MBEDTLS;
         if (mbedtls_pk_parse_key(&ctx->pk, key, len_key + 1, NULL, 0)) 
             return COSE_ERROR_MBEDTLS;
     }
     ctx->key.kty = cose_kty_ec2;
-    ctx->len_hash = mbedtls_pk_get_len(&ctx->pk);
-    if (ctx->len_hash == 32) {
+    mbedtls_ecp_group_id grp_id = mbedtls_pk_ec(ctx->pk)->grp.id;
+    if (grp_id == MBEDTLS_ECP_DP_SECP256R1) {
+        ctx->len_hash = 32;
         ctx->key.crv = cose_curve_p256;
         ctx->key.alg = cose_alg_ecdsa_sha_256;
         ctx->md_alg = MBEDTLS_MD_SHA256;
         ctx->len_sig = 72;
-    } else if (ctx->len_hash == 48) {
+    } else if (grp_id == MBEDTLS_ECP_DP_SECP384R1) {
+        ctx->len_hash = 48;
         ctx->key.crv = cose_curve_p384;
         ctx->key.alg = cose_alg_ecdsa_sha_384;
         ctx->md_alg = MBEDTLS_MD_SHA384;
@@ -65,10 +58,6 @@ int cose_sign_init(
 void cose_sign_free(cose_sign_context * ctx) 
 {
     mbedtls_pk_free(&ctx->pk);
-    if (ctx->ent != NULL) {
-        mbedtls_entropy_free(&ctx->ent->entropy);
-        mbedtls_ctr_drbg_free(&ctx->ent->ctr_drbg);
-    }
 }
 
 int cose_sign_write(cose_sign_context * ctx, 
@@ -80,18 +69,31 @@ int cose_sign_write(cose_sign_context * ctx,
     uint8_t hash[ctx->len_hash];
     uint8_t sig[ctx->len_sig];
 
-    if (cose_encode_sign_tbs(&ctx->key, pld, len_pld, aad, len_aad, obj, &len_temp)) 
+    if (cose_encode_sign_tbs(
+                &ctx->key, 
+                pld, len_pld, 
+                aad, len_aad, 
+                obj, &len_temp)) 
         return COSE_ERROR_ENCODE;
 
-    if (mbedtls_md(mbedtls_md_info_from_type(ctx->md_alg), obj, len_temp, hash)) 
+    if (mbedtls_md(
+                mbedtls_md_info_from_type(ctx->md_alg), 
+                obj, len_temp, hash)) 
         return COSE_ERROR_HASH;
 
-    if (mbedtls_pk_sign(&ctx->pk, ctx->md_alg, hash, 0, sig, &len_temp, 
-                mbedtls_ctr_drbg_random, &ctx->ent->ctr_drbg)) 
+    if (mbedtls_ecdsa_write_signature(
+                ctx->pk.pk_ctx, ctx->md_alg, 
+                hash, ctx->len_hash, 
+                sig, &len_temp, 
+                NULL, NULL)) 
         return COSE_ERROR_SIGN;
 
-    if (cose_encode_sign_object(&ctx->key, pld, len_pld, aad, len_aad, 
-                sig, len_temp, obj, len_obj))
+    if (cose_encode_sign_object(
+                &ctx->key, 
+                pld, len_pld, 
+                aad, len_aad, 
+                sig, len_temp,
+                obj, len_obj))
         return COSE_ERROR_ENCODE;
 
     return COSE_ERROR_NONE;
@@ -106,17 +108,28 @@ int cose_sign_read(cose_sign_context * ctx,
     uint8_t sig[ctx->len_sig];
     uint8_t hash[ctx->len_hash];
 
-    if (cose_decode_sign_object(&ctx->key, obj, len_obj, aad, len_aad, 
-                pld, &len_temp, sig, &ctx->len_sig))
+    if (cose_decode_sign_object(
+                &ctx->key, 
+                obj, len_obj,
+                aad, len_aad, 
+                pld, &len_temp, 
+                sig, &ctx->len_sig))
         return COSE_ERROR_DECODE;
 
-    if (mbedtls_md(mbedtls_md_info_from_type(ctx->md_alg), pld, len_temp, hash)) 
+    if (mbedtls_md(
+                mbedtls_md_info_from_type(ctx->md_alg), 
+                pld, len_temp, hash)) 
         return COSE_ERROR_HASH;
 
-    if (mbedtls_pk_verify(&ctx->pk, ctx->md_alg, hash, 0, sig, ctx->len_sig))
+    if (mbedtls_pk_verify(
+                &ctx->pk, ctx->md_alg, 
+                hash, 0, 
+                sig, ctx->len_sig))
         return COSE_ERROR_AUTHENTICATE;
 
-    if (cose_decode_sign_payload(obj, len_obj, pld, len_pld)) 
+    if (cose_decode_sign_payload(
+                obj, len_obj, 
+                pld, len_pld)) 
         return COSE_ERROR_DECODE;
 
     return COSE_ERROR_NONE;

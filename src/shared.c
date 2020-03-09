@@ -16,7 +16,7 @@
  */
 
 #include <cozy/cose.h>
-#include <cozy/shared.h>
+#include <cozy/common.h>
 
 int cose_encode_final(
         CborEncoder * encoder, 

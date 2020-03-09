@@ -35,9 +35,8 @@ void test_cose_sign_write(void) {
     len_obj = sizeof(obj);
 
     cose_sign_context ctx;
-    cose_entropy_context ent;
 
-    zassert_false(cose_sign_init(&ctx, &ent, key, strlen(key), kid, sizeof(kid)),
+    zassert_false(cose_sign_init(&ctx, 0, key, strlen(key), kid, sizeof(kid)),
             "Failed to initialize COSE signing context.\n");
 
     zassert_false(cose_sign_write(&ctx, 
@@ -55,7 +54,7 @@ void test_cose_sign_read(void) {
     
     cose_sign_context ctx;
 
-    zassert_false(cose_sign_init(&ctx, NULL, key, strlen(key), kid, sizeof(kid)), 
+    zassert_false(cose_sign_init(&ctx, 1, key, strlen(key), kid, sizeof(kid)), 
             "Failed to initialize COSE signing context.\n");
 
     zassert_false(cose_sign_read(&ctx, 
