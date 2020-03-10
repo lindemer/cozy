@@ -60,7 +60,7 @@ int cose_crypt_decipher(
 }
 
 int cose_crypt_init(cose_crypt_context * ctx,
-        const uint8_t * key, cose_alg alg,
+        const uint8_t * key, cose_alg_t alg,
         const uint8_t * kid, const size_t len_kid) 
 {
     ctx->key.alg = alg;

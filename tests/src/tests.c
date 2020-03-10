@@ -22,7 +22,7 @@
 const uint8_t * pld = COSE_TEST_PLD;
 const uint8_t * aad = COSE_TEST_AAD;
 const uint8_t kid[] = {0xC0, 0x53};
-uint8_t obj[4096];
+uint8_t obj[4000];
 uint8_t out[4096];
 size_t len_obj;
 size_t len_out;
@@ -70,7 +70,7 @@ void test_cose_sign_read(void) {
 void test_cose_encrypt0_write(void) {
     const uint8_t key[16] = COSE_TEST_KEY_128_SYM;
     const uint8_t iv[12] = COSE_TEST_IV;
-    cose_alg alg = cose_alg_aes_gcm_128;
+    cose_alg_t alg = cose_alg_aes_gcm_128;
 
     size_t len_pld = strlen(pld);
     size_t len_aad = strlen(aad);
@@ -89,7 +89,7 @@ void test_cose_encrypt0_write(void) {
 
 void test_cose_encrypt0_read(void) {
     const uint8_t key[16] = COSE_TEST_KEY_128_SYM;
-    cose_alg alg = cose_alg_aes_gcm_128;
+    cose_alg_t alg = cose_alg_aes_gcm_128;
 
     size_t len_aad = strlen(aad);
     size_t len_out = sizeof(out);

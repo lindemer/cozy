@@ -71,7 +71,7 @@ typedef enum {
     cose_tag_encrypt0 = 16,
     cose_tag_mac = 97,
     cose_tag_mac0 = 17,
-} cose_tag;
+} cose_tag_t;
 
 typedef enum {
     cose_alg_aes_gcm_128 = 1,
@@ -114,7 +114,7 @@ typedef enum {
     cose_alg_ecdsa_sha_256 = -7,
     cose_alg_ecdsa_sha_384 = -35,
     cose_alg_ecdsa_sha_512 = -36,
-} cose_alg;
+} cose_alg_t;
 
 typedef enum {
     cose_header_algorithm = 1,
@@ -138,7 +138,7 @@ typedef enum {
     cose_header_ecdh_epk = -1,
     cose_header_ecdh_spk = -2,
     cose_header_ecdh_spk_kid = -3,
-} cose_header;
+} cose_header_t;
 
 typedef enum {
     cose_key_label_kty = 1,
@@ -146,7 +146,7 @@ typedef enum {
     cose_key_label_alg = 3,
     cose_key_label_key_ops = 4,
     cose_key_label_base_iv = 5,
-} cose_key_label;
+} cose_key_label_t;
 
 typedef enum {
     cose_key_op_sign = 1,
@@ -159,30 +159,30 @@ typedef enum {
     cose_key_op_derive_bits = 8,
     cose_key_op_mac_create = 9,
     cose_key_op_mac_verify = 10,
-} cose_key_op;
+} cose_key_op_t;
 
 typedef enum {
     cose_kty_okp = 1,
     cose_kty_ec2 = 2,
     cose_kty_symmetric = 4,
-} cose_kty;
+} cose_kty_t;
 
 typedef enum {
     cose_ec_param_crv = -1,
     cose_ec_param_x = -2,
     cose_ec_param_y = -3,
     cose_ec_param_d = -4,
-} cose_ec_param;
+} cose_ec_param_t;
 
 typedef enum {
     cose_octet_param_crv = -1,
     cose_octet_param_x = -2,
     cose_octet_param_d = -4,
-} cose_octet_param;
+} cose_octet_param_t;
 
 typedef enum {
     cose_symmetric_param_K = -1,
-} cose_symmetric_param;
+} cose_symmetric_param_t;
 
 typedef enum {
     cose_curve_p256 = 1,
@@ -192,7 +192,7 @@ typedef enum {
     cose_curve_x448 = 5,
     cose_curve_ed25519 = 6,
     cose_curve_ed448 = 7,
-} cose_curve;
+} cose_curve_t;
 
 typedef enum {
     cwt_claim_iss = 1,  /* Issuer */
@@ -202,7 +202,7 @@ typedef enum {
     cwt_claim_nbf = 5,  /* Not Before */
     cwt_claim_iat = 6,  /* Issued At */
     cwt_claim_cti = 7,  /* CWT ID */
-} cwt_claim;
+} cwt_claim_t;
 
 /**
  * @brief Crypto key info structure
@@ -216,10 +216,10 @@ typedef enum {
  * @paeam len_key Length of key in bytes
  */
 typedef struct {
-    cose_kty kty;
-    cose_alg alg;
-    cose_curve crv;
-    cose_key_op op;
+    cose_kty_t kty;
+    cose_alg_t alg;
+    cose_curve_t crv;
+    cose_key_op_t op;
     uint8_t kid[16];
     size_t len_kid;
     size_t len_key;
@@ -289,7 +289,7 @@ int cose_sign_init(
  * @retval COSE_ERROR_UNSUPPORTED Crypto algorithm not supported
  */
 int cose_crypt_init(cose_crypt_context * ctx,
-        const uint8_t * key, cose_alg alg,
+        const uint8_t * key, cose_alg_t alg,
         const uint8_t * kid, const size_t len_kid);
 
 /**
