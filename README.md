@@ -1,5 +1,5 @@
 # Cozy
-**Cozy** can be linked as an external module to any Zephyr app. This library is built on [mbedTLS](https://github.com/zephyrproject-rtos/mbedtls) and [TinyCBOR](https://github.com/zephyrproject-rtos/tinycbor).
+**Cozy** can be linked as an external module to any Zephyr app. This library is built on [mbedTLS](https://github.com/zephyrproject-rtos/mbedtls) and [NanoCBOR](https://github.com/bergzand/NanoCBOR).
 
 ## Current coverage of RFC 8152
 * Encode/decode COSE Sign objects with single signer
