@@ -149,8 +149,7 @@ int cose_encode_sign_tbs(
 
     nanocbor_encoder_init(&nc, tbs, *len_tbs);
     nanocbor_fmt_array(&nc, 5);
-    nanocbor_put_tstr(&nc, COSE_CONTEXT_SIGN);
-    nanocbor_put_bstr(&nc, NULL, 0);
+    nanocbor_put_tstr(&nc, COSE_CONTEXT_SIGN1);
     nanocbor_put_bstr(&nc, prot, len_prot);
     nanocbor_put_bstr(&nc, aad, len_aad);
     nanocbor_put_bstr(&nc, pld, len_pld);
@@ -174,17 +173,11 @@ int cose_encode_sign_object(
     cose_encode_prot(key, &nc);
 
     nanocbor_encoder_init(&nc, obj, *len_obj);
-    nanocbor_fmt_tag(&nc, cose_tag_sign);
+    nanocbor_fmt_tag(&nc, cose_tag_sign1);
     nanocbor_fmt_array(&nc, 4);
-    nanocbor_put_bstr(&nc, NULL, 0);
+    nanocbor_put_bstr(&nc, prot, len_prot);
     nanocbor_fmt_map(&nc, 0);
     nanocbor_put_bstr(&nc, pld, len_pld);
-    nanocbor_fmt_array(&nc, 1);
-    nanocbor_fmt_array(&nc, 3);
-    nanocbor_put_bstr(&nc, prot, len_prot);
-    nanocbor_fmt_map(&nc, 1);
-    nanocbor_fmt_int(&nc, cose_header_kid);
-    nanocbor_put_bstr(&nc, key->kid, key->len_kid);
     nanocbor_put_bstr(&nc, sig, len_sig);
 
     *len_obj = nanocbor_encoded_len(&nc);
@@ -210,15 +203,7 @@ int cose_decode_sign_object(
     if (cose_encode_sign_tbs(key, *pld, *len_pld, 
                 aad, len_aad, tbs, len_tbs)) 
         return COSE_ERROR_ENCODE;
-
-    nanocbor_value_t arr1, arr2;
-    if (nanocbor_enter_array(&arr, &arr1) < 0) 
-        return COSE_ERROR_DECODE;
-    if (nanocbor_enter_array(&arr1, &arr2) < 0) 
-        return COSE_ERROR_DECODE;
-    nanocbor_skip(&arr2); 
-    nanocbor_skip(&arr2);
-    nanocbor_get_bstr(&arr2, sig, len_sig); 
+    nanocbor_get_bstr(&arr, sig, len_sig); 
 
     return COSE_ERROR_NONE;
 }
