@@ -1,6 +1,5 @@
 menuconfig COZY
     bool "Cozy Support"
-    select TINYCBOR
     select MBEDTLS
     help
         This option enables the Cozy COSE library.

@@ -19,7 +19,8 @@
 #define COSE_H
 
 #include <zephyr.h>
-#include <tinycbor/cbor.h>
+#include <string.h>
+#include "nanocbor/nanocbor.h"
 
 #ifndef CONFIG_MBEDTLS_CFG_FILE
 #include "mbedtls/config-tls-generic.h"
@@ -32,6 +33,7 @@
 #include <mbedtls/gcm.h>
 #include <mbedtls/ecp.h>
 #include <mbedtls/ecdsa.h>
+#include <mbedtls/error.h>
 
 #define COSE_CONTEXT_SIGN "Signature"
 #define COSE_CONTEXT_SIGN1 "Signature1"
@@ -44,7 +46,9 @@
 #define COSE_CONTEXT_MAC_RECIPIENT "Mac_Recipient"
 #define COSE_CONTEXT_REC_RECIPIENT "Rec_Recipient"
 
-#define DUMP(var) printk("%s = %x\n", #var, var);
+#define DUMPX(var) printk("%s = %x\n", #var, var);
+#define DUMPD(var) printk("%s = %d\n", #var, var);
+#define DUMPS(var) printk("%s = %s\n", #var, var);
 
 /** 
  * @brief COSE API
@@ -206,14 +210,6 @@ typedef enum {
 
 /**
  * @brief Crypto key info structure
- *
- * @param kty Key type
- * @param alg The crypto algorithm allowed for use with this key
- * @param crv The EC curve for this key (if applicable)
- * @param op Operations permitted for this key
- * @param kid Key identifier
- * @param len_kid Length of key identifier in bytes
- * @paeam len_key Length of key in bytes
  */
 typedef struct {
     cose_kty_t kty;
@@ -223,106 +219,83 @@ typedef struct {
     uint8_t kid[16];
     size_t len_kid;
     size_t len_key;
-} cose_key;
+} cose_key_t;
 
 /**
  * @brief COSE signing and verification context
- *
- * @param key Key info
- * @param len_sig Maximum length of signature with specifified alg
- * @param len_hash Length of message digest with specified alg
- * @param pk mbedTLS public key context
- * @param md_alg mbedTLS hash function (ex: MBEDTLS_MD_SHA256)
  */
 typedef struct {
-    cose_key key;
+    cose_key_t key;
     size_t len_sig;
     size_t len_hash;
     mbedtls_pk_context pk;
     mbedtls_md_type_t md_alg;
-} cose_sign_context;
+} cose_sign_context_t;
 
 /**
  * @brief COSE encryption and MAC context
- *
- * @param key Key info
- * @param cipher mbedTLS cipher algorithm (ex: MBEDTLS_CIPHER_ID_AES) 
- * @param len_mac Length of message authentication codes
- * @param gcm mbedTLS GCM encryption context
  */
 typedef struct {
-    cose_key key;
+    cose_key_t key;
     int cipher;
     size_t len_mac;
     mbedtls_gcm_context gcm;
-} cose_crypt_context;
+} cose_crypt_context_t;
 
 /**
  * @brief Initialize COSE signing context
  *
- * @param ctx Pointer to uninitialized signing context
- * @param mode 0 for signature generation, 1 for verification
- * @param key Pointer to a PEM-formatted private key string
- * @param len_key Length of key string
- * @param kid Pointer to key identifier bytes
- * @param len_kid Length of key identifier
+ * @param       ctx     Pointer to uninitialized signing context
+ * @param       mode    0 for signature generation, 1 for verification
+ * @param       key     PEM-formatted key string
+ * @param       kid     Pointer to key identifier bytes
+ * @param       len_kid Length of key identifier
  *
  * @retval COSE_ERROR_NONE Success
- * @retval COSE_ERROR_MBEDTLS mbedTLS failed to parse key string 
+ * @retval COSE_ERROR_MBEDTLS Failed to parse key string 
  * @retval COSE_ERROR_UNSUPPORTED Crypto algorithm not supported
  */
 int cose_sign_init(
-        cose_sign_context * ctx, bool mode,
-        const uint8_t * key, const size_t len_key,
+        cose_sign_context_t * ctx, bool mode,
+        const uint8_t * pem,
         const uint8_t * kid, const size_t len_kid);
 
 /**
  * @brief Initialize COSE encryption and MAC context
  *
- * @param ctx Pointer to uninitialized encryption and MAC context
- * @param key Pointer to a PEM-formatted public key string
- * @param alg Crypto algorithm allowed for use with this key
- * @param kid Pointer to key identifier bytes
- * @param len_kid Length of key identifier
+ * @param       ctx     Pointer to uninitialized encryption and MAC context
+ * @param       key     Pointer to a PEM-formatted public key string
+ * @param       alg     Crypto algorithm allowed for use with this key
+ * @param       kid     Pointer to key identifier bytes
+ * @param       len_kid Length of key identifier
  *
- * @retval COSE_ERROR_NONE Success
- * @retval COSE_ERROR_UNSUPPORTED Crypto algorithm not supported
+ * @retval COSE_ERROR_NONE              Success
+ * @retval COSE_ERROR_UNSUPPORTED       Crypto algorithm not supported
  */
-int cose_crypt_init(cose_crypt_context * ctx,
+int cose_crypt_init(cose_crypt_context_t * ctx,
         const uint8_t * key, cose_alg_t alg,
         const uint8_t * kid, const size_t len_kid);
 
-/**
- * @brief Free COSE signing context 
- *
- * @param ctx Pointer to the signing context 
- */
-void cose_sign_free(cose_sign_context * ctx);
-
-/**
- * @brief Free COSE encryption and MAC context 
- *
- * @param ctx Pointer to the encryption and MAC context 
- */
-void cose_crypt_free(cose_crypt_context * ctx);
+void cose_sign_free(cose_sign_context_t * ctx);
+void cose_crypt_free(cose_crypt_context_t * ctx);
 
 /**
  * @brief Encode a COSE Sign object
  *
- * @param ctx Pointer to the COSE signing context
- * @param pld Pointer to the payload to be signed 
- * @param len_pld Length of the payload
- * @param aad Pointer to additionally authenticated data (can be NULL)
- * @param len_aad Length of additionally authenticated data (can be 0)
- * @param obj Pointer to output buffer for encoded object 
- * @param len_obj Pointer to length of buffer (will be overwritten with encoded length)
+ * @param       ctx     Pointer to the COSE signing context
+ * @param       pld     Pointer to the payload to be signed 
+ * @param       len_pld Length of the payload
+ * @param       aad     Pointer to additionally authenticated data (can be NULL)
+ * @param       len_aad Length of additionally authenticated data (can be 0)
+ * @param[out]  obj     Pointer to output buffer for encoded object 
+ * @param[out]  len_obj Pointer to length of buffer
  *
- * @retval COSE_ERROR_NONE Success
- * @retval COSE_ERROR_ENCODE Failed to encode COSE object
- * @retval COSE_ERROR_HASH mbedTLS failed to hash authenticated data
- * @retval COSE_ERROR_SIGN mbedTLS failed to encrypt message diggest
+ * @retval COSE_ERROR_NONE              Success
+ * @retval COSE_ERROR_ENCODE            Failed to encode COSE object
+ * @retval COSE_ERROR_HASH              Failed to hash authenticated data
+ * @retval COSE_ERROR_SIGN              Failed to encrypt message diggest
  */
-int cose_sign_write(cose_sign_context * ctx, 
+int cose_sign_write(cose_sign_context_t * ctx, 
         const uint8_t * pld, const size_t len_pld, 
         const uint8_t * aad, const size_t len_aad,
         uint8_t * obj, size_t * len_obj);
@@ -330,42 +303,42 @@ int cose_sign_write(cose_sign_context * ctx,
 /**
  * @brief Decode a COSE Sign object
  *
- * @param ctx Pointer to the COSE signing context
- * @param obj Pointer to the encoded COSE object 
- * @param len_obj Length of encode COSE object 
- * @param aad Pointer to additionally authenticated data (can be NULL)
- * @param len_aad Length of additionally authenticated data (can be 0)
- * @param pld Pointer to the output buffer for decoded payload 
- * @param len_pld Pointer to length of buffer (will be overwritten with decoded length)
+ * @param       ctx     Pointer to the COSE signing context
+ * @param       obj     Pointer to the encoded COSE object 
+ * @param       len_obj Length of encode COSE object 
+ * @param       aad     Pointer to additionally authenticated data (can be NULL)
+ * @param       len_aad Length of additionally authenticated data (can be 0)
+ * @param[out]  pld     Pointer to payload within COSE object
+ * @param[out]  len_pld Payload length
  *
- * @retval COSE_ERROR_NONE Success
- * @retval COSE_ERROR_DECODE Failed to decode COSE object
- * @retval COSE_ERROR_HASH mbedTLS failed to hash authenticated data
- * @retval COSE_ERROR_AUTHENTICATE mbedTLS failed to authenticate signature
+ * @retval COSE_ERROR_NONE              Success
+ * @retval COSE_ERROR_DECODE            Failed to decode COSE object
+ * @retval COSE_ERROR_HASH              Failed to hash authenticated data
+ * @retval COSE_ERROR_AUTHENTICATE      Failed to authenticate signature
  */
-int cose_sign_read(cose_sign_context * ctx,
+int cose_sign_read(cose_sign_context_t * ctx,
         const uint8_t * obj, const size_t len_obj, 
         const uint8_t * aad, const size_t len_aad,
-        uint8_t * pld, size_t * len_pld);
+        const uint8_t ** pld, size_t * len_pld);
 
 /**
  * @brief Encode a COSE Encrypt object
  *
- * @param ctx Pointer to the COSE encryption and MAC context
- * @param pld Pointer to the payload to be encrypted (and MACed) 
- * @param len_pld Length of the payload
- * @param aad Pointer to additionally authenticated data (can be NULL)
- * @param len_aad Length of additionally authenticated data (can be 0)
- * @param aad Pointer to initialization vector
- * @param len_aad Length of initialization vector
- * @param obj Pointer to output buffer for encoded object 
- * @param len_obj Pointer to length of buffer (will be overwritten with encoded length)
+ * @param       ctx     Pointer to the COSE encryption and MAC context
+ * @param       pld     Pointer to the payload to be encrypted (and MACed) 
+ * @param       len_pld Length of the payload
+ * @param       aad     Pointer to additionally authenticated data (can be NULL)
+ * @param       len_aad Length of additionally authenticated data (can be 0)
+ * @param       aad     Pointer to initialization vector
+ * @param       len_aad Length of initialization vector
+ * @param[out]  obj     Pointer to output buffer for encoded object 
+ * @param[out]  len_obj Pointer to length of buffer
  *
- * @retval COSE_ERROR_NONE Success
- * @retval COSE_ERROR_ENCODE Failed to encode COSE object
- * @retval COSE_ERROR_ENCRYPT mbedTLS failed to encrypt (and MAC) data
+ * @retval COSE_ERROR_NONE              Success
+ * @retval COSE_ERROR_ENCODE            Failed to encode COSE object
+ * @retval COSE_ERROR_ENCRYPT           Failed to encrypt (and MAC) data
  */
-int cose_encrypt0_write(cose_crypt_context *ctx,
+int cose_encrypt0_write(cose_crypt_context_t *ctx,
         const uint8_t * pld, const size_t len_pld, 
         const uint8_t * aad, const size_t len_aad,
         const uint8_t * iv, const size_t len_iv,
@@ -374,20 +347,20 @@ int cose_encrypt0_write(cose_crypt_context *ctx,
 /**
  * @brief Decode a COSE Encrypt object
  *
- * @param ctx Pointer to the COSE encryption and MAC context
- * @param obj Pointer to the encoded COSE object 
- * @param len_obj Length of encode COSE object 
- * @param aad Pointer to additionally authenticated data (can be NULL)
- * @param len_aad Length of additionally authenticated data (can be 0)
- * @param pld Pointer to the output buffer for decoded payload 
- * @param len_pld Pointer to length of buffer (will be overwritten with decoded length)
+ * @param       ctx     Pointer to the COSE encryption and MAC context
+ * @param       obj     Pointer to the encoded COSE object 
+ * @param       len_obj Length of encode COSE object 
+ * @param       aad     Pointer to additionally authenticated data (can be NULL)
+ * @param       len_aad Length of additionally authenticated data (can be 0)
+ * @param[out]  pld     Pointer to the output buffer for decoded payload 
+ * @param[out]  len_pld Pointer to length of buffer
  *
- * @retval COSE_ERROR_NONE Success
- * @retval COSE_ERROR_ENCODE Failed to encode authenticated data structure 
- * @retval COSE_ERROR_DECODE Failed to decode COSE object 
- * @retval COSE_ERROR_DECRYPT mbedTLS failed to decrypt or authenticate COSE object
+ * @retval COSE_ERROR_NONE              Success
+ * @retval COSE_ERROR_ENCODE            Failed to encode authenticated data structure 
+ * @retval COSE_ERROR_DECODE            Failed to decode COSE object 
+ * @retval COSE_ERROR_DECRYPT           Failed to decrypt/authenticate COSE object
  */
-int cose_encrypt0_read(cose_crypt_context * ctx,
+int cose_encrypt0_read(cose_crypt_context_t * ctx,
         const uint8_t * obj, const size_t len_obj, 
         const uint8_t * aad, const size_t len_aad,
         uint8_t * pld, size_t * len_pld);
@@ -395,7 +368,7 @@ int cose_encrypt0_read(cose_crypt_context * ctx,
 /**
  * @brief Not yet implemented
  */
-int cose_mac0_write(cose_crypt_context *ctx,
+int cose_mac0_write(cose_crypt_context_t *ctx,
         const uint8_t * pld, const size_t len_pld, 
         const uint8_t * aad, const size_t len_aad,
         const uint8_t * iv, const size_t len_iv,
@@ -404,7 +377,7 @@ int cose_mac0_write(cose_crypt_context *ctx,
 /**
  * @brief Not yet implemented
  */
-int cose_mac0_read(cose_crypt_context * ctx,
+int cose_mac0_read(cose_crypt_context_t * ctx,
         const uint8_t * obj, const size_t len_obj, 
         const uint8_t * aad, const size_t len_aad,
         uint8_t * pld, size_t * len_pld);

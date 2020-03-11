@@ -22,21 +22,19 @@
 const uint8_t * pld = COSE_TEST_PLD;
 const uint8_t * aad = COSE_TEST_AAD;
 const uint8_t kid[] = {0xC0, 0x53};
-uint8_t obj[4000];
-uint8_t out[4096];
+uint8_t obj[3072];
+uint8_t out[3072];
 size_t len_obj;
 size_t len_out;
 
 void test_cose_sign_write(void) {
     const uint8_t * key = COSE_TEST_KEY_384_PRIV;
-
     size_t len_pld = strlen(pld);
     size_t len_aad = strlen(aad);
     len_obj = sizeof(obj);
+    cose_sign_context_t ctx;
 
-    cose_sign_context ctx;
-
-    zassert_false(cose_sign_init(&ctx, 0, key, strlen(key), kid, sizeof(kid)),
+    zassert_false(cose_sign_init(&ctx, 0, key, kid, sizeof(kid)),
             "Failed to initialize COSE signing context.\n");
 
     zassert_false(cose_sign_write(&ctx, 
@@ -48,20 +46,20 @@ void test_cose_sign_write(void) {
 
 void test_cose_sign_read(void) {
     const uint8_t * key = COSE_TEST_KEY_384_PUB;
-    
     size_t len_aad = strlen(aad);
-    size_t len_out = sizeof(out);
-    
-    cose_sign_context ctx;
+    uint8_t * dec;
+    size_t len_dec;
+    cose_sign_context_t ctx;
 
-    zassert_false(cose_sign_init(&ctx, 1, key, strlen(key), kid, sizeof(kid)), 
+    zassert_false(cose_sign_init(&ctx, 1, key, kid, sizeof(kid)), 
             "Failed to initialize COSE signing context.\n");
 
     zassert_false(cose_sign_read(&ctx, 
-                obj, len_obj, aad, len_aad, out, &len_out), 
+                obj, len_obj, aad, len_aad, 
+                (const uint8_t **) &dec, &len_dec), 
             "Failed to authenticate signature.\n"); 
 
-    zassert_false(memcmp(out, pld, strlen(pld)),
+    zassert_false(memcmp(dec, pld, len_dec),
             "Failed to decode payload.\n");
 
     cose_sign_free(&ctx);
@@ -76,7 +74,7 @@ void test_cose_encrypt0_write(void) {
     size_t len_aad = strlen(aad);
     len_obj = sizeof(obj);
 
-    cose_crypt_context ctx;
+    cose_crypt_context_t ctx;
     zassert_false(cose_crypt_init(&ctx, key, alg, NULL, 0),
             "Failed to initialize COSE encryption context.\n");
 
@@ -94,7 +92,7 @@ void test_cose_encrypt0_read(void) {
     size_t len_aad = strlen(aad);
     size_t len_out = sizeof(out);
 
-    cose_crypt_context ctx;
+    cose_crypt_context_t ctx;
     zassert_false(cose_crypt_init(&ctx, key, alg, NULL, 0),
             "Failed to initialize COSE encryption context.\n");
 

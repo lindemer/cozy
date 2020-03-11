@@ -21,8 +21,8 @@
 #include <cozy/common.h>
 
 int cose_sign_init(
-        cose_sign_context * ctx, bool mode,
-        const uint8_t * key, const size_t len_key,
+        cose_sign_context_t * ctx, bool mode, 
+        const uint8_t * pem, 
         const uint8_t * kid, const size_t len_kid) 
 {
     ctx->key.len_kid = len_kid;
@@ -30,11 +30,13 @@ int cose_sign_init(
     mbedtls_pk_init(&ctx->pk);
     if (mode) {
         ctx->key.op = cose_key_op_verify;
-        if (mbedtls_pk_parse_public_key(&ctx->pk, key, len_key + 1)) 
+        if (mbedtls_pk_parse_public_key(
+                    &ctx->pk, pem, strlen(pem) + 1)) 
             return COSE_ERROR_MBEDTLS;
     } else {
         ctx->key.op = cose_key_op_sign;
-        if (mbedtls_pk_parse_key(&ctx->pk, key, len_key + 1, NULL, 0)) 
+        if (mbedtls_pk_parse_key(
+                    &ctx->pk, pem, strlen(pem) + 1, NULL, 0)) 
             return COSE_ERROR_MBEDTLS;
     }
     ctx->key.kty = cose_kty_ec2;
@@ -55,17 +57,12 @@ int cose_sign_init(
     return COSE_ERROR_NONE;
 }
 
-void cose_sign_free(cose_sign_context * ctx) 
-{
-    mbedtls_pk_free(&ctx->pk);
-}
-
-int cose_sign_write(cose_sign_context * ctx, 
+int cose_sign_write(cose_sign_context_t * ctx, 
         const uint8_t * pld, const size_t len_pld, 
         const uint8_t * aad, const size_t len_aad,
         uint8_t * obj, size_t * len_obj) 
 {
-    size_t len_temp = *len_obj;
+    size_t len_buff = *len_obj;
     uint8_t hash[ctx->len_hash];
     uint8_t sig[ctx->len_sig];
 
@@ -73,18 +70,18 @@ int cose_sign_write(cose_sign_context * ctx,
                 &ctx->key, 
                 pld, len_pld, 
                 aad, len_aad, 
-                obj, &len_temp)) 
+                obj, &len_buff)) 
         return COSE_ERROR_ENCODE;
 
     if (mbedtls_md(
                 mbedtls_md_info_from_type(ctx->md_alg), 
-                obj, len_temp, hash)) 
+                obj, len_buff, hash)) 
         return COSE_ERROR_HASH;
 
     if (mbedtls_ecdsa_write_signature(
                 ctx->pk.pk_ctx, ctx->md_alg, 
                 hash, ctx->len_hash, 
-                sig, &len_temp, 
+                sig, &len_buff, 
                 NULL, NULL)) 
         return COSE_ERROR_SIGN;
 
@@ -92,158 +89,138 @@ int cose_sign_write(cose_sign_context * ctx,
                 &ctx->key, 
                 pld, len_pld, 
                 aad, len_aad, 
-                sig, len_temp,
+                sig, len_buff,
                 obj, len_obj))
         return COSE_ERROR_ENCODE;
 
     return COSE_ERROR_NONE;
 }
 
-int cose_sign_read(cose_sign_context * ctx, 
+int cose_sign_read(cose_sign_context_t * ctx, 
         const uint8_t * obj, const size_t len_obj, 
         const uint8_t * aad, const size_t len_aad,
-        uint8_t * pld, size_t * len_pld) 
+        const uint8_t ** pld, size_t * len_pld) 
 {
-    size_t len_temp = *len_pld;
-    uint8_t sig[ctx->len_sig];
+    size_t len_buff = len_obj + len_aad;
+    uint8_t buff[len_buff];
     uint8_t hash[ctx->len_hash];
+    uint8_t * sig;
+    size_t len_sig;
 
     if (cose_decode_sign_object(
                 &ctx->key, 
                 obj, len_obj,
                 aad, len_aad, 
-                pld, &len_temp, 
-                sig, &ctx->len_sig))
+                buff, &len_buff, 
+                pld, len_pld,
+                (const uint8_t **) &sig, &len_sig))
         return COSE_ERROR_DECODE;
 
     if (mbedtls_md(
                 mbedtls_md_info_from_type(ctx->md_alg), 
-                pld, len_temp, hash)) 
+                buff, len_buff, hash)) 
         return COSE_ERROR_HASH;
 
-    if (mbedtls_pk_verify(
+   if (mbedtls_pk_verify(
                 &ctx->pk, ctx->md_alg, 
-                hash, 0, 
-                sig, ctx->len_sig))
+                hash, 0, sig, len_sig))
         return COSE_ERROR_AUTHENTICATE;
-
-    if (cose_decode_sign_payload(
-                obj, len_obj, 
-                pld, len_pld)) 
-        return COSE_ERROR_DECODE;
 
     return COSE_ERROR_NONE;
 }
 
+void cose_sign_free(cose_sign_context_t * ctx) 
+{
+    mbedtls_pk_free(&ctx->pk);
+}
+
 int cose_encode_sign_tbs(
-        cose_key * key,
+        cose_key_t * key,
         const uint8_t * pld, const size_t len_pld, 
         const uint8_t * aad, const size_t len_aad,
         uint8_t * tbs, size_t * len_tbs) 
 {
-    size_t len_pro = 8;
-    uint8_t pro[len_pro];
+    nanocbor_encoder_t nc;
+    nanocbor_encoder_init(&nc, NULL, 0);
+    size_t len_prot = cose_encode_prot(key, &nc);
+    uint8_t prot[len_prot];
+    nanocbor_encoder_init(&nc, prot, len_prot);
+    cose_encode_prot(key, &nc);
 
-    CborEncoder encoder_obj0, encoder_arr0;
+    nanocbor_encoder_init(&nc, tbs, *len_tbs);
+    nanocbor_fmt_array(&nc, 5);
+    nanocbor_put_tstr(&nc, COSE_CONTEXT_SIGN);
+    nanocbor_put_bstr(&nc, NULL, 0);
+    nanocbor_put_bstr(&nc, prot, len_prot);
+    nanocbor_put_bstr(&nc, aad, len_aad);
+    nanocbor_put_bstr(&nc, pld, len_pld);
 
-    cbor_encoder_init(&encoder_obj0, tbs, *len_tbs, 0);
-    cbor_encoder_create_array(&encoder_obj0, &encoder_arr0, 5);                 // Sig_Structure
-    cbor_encode_text_string(&encoder_arr0, COSE_CONTEXT_SIGN,                   // context
-            strlen(COSE_CONTEXT_SIGN));
-    cbor_encode_byte_string(&encoder_arr0, NULL, 0);                            // body_protected
-    cose_encode_protected(key, pro, &len_pro);                                  // sign_protected
-    cbor_encode_byte_string(&encoder_arr0, pro, len_pro);
-    cbor_encode_byte_string(&encoder_arr0, aad, len_aad);                       // external_aad
-    cbor_encode_byte_string(&encoder_arr0, pld, len_pld);                       // payload
-    cbor_encoder_close_container(&encoder_obj0, &encoder_arr0);
-
-    return cose_encode_final(&encoder_obj0, tbs, len_tbs);
+    *len_tbs = nanocbor_encoded_len(&nc);
+    return COSE_ERROR_NONE;
 }
 
 int cose_encode_sign_object(
-        cose_key * key,
+        cose_key_t * key,
         const uint8_t * pld, const size_t len_pld, 
         const uint8_t * aad, const size_t len_aad,
         const uint8_t * sig, const size_t len_sig,
         uint8_t * obj, size_t * len_obj) 
 {
-    size_t len_pro = 8;
-    uint8_t pro[len_pro];
+    nanocbor_encoder_t nc;
+    nanocbor_encoder_init(&nc, NULL, 0);
+    size_t len_prot = cose_encode_prot(key, &nc);
+    uint8_t prot[len_prot];
+    nanocbor_encoder_init(&nc, prot, len_prot);
+    cose_encode_prot(key, &nc);
 
-    CborEncoder encoder_obj0, encoder_arr0, 
-                encoder_arr1, encoder_arr2,
-                encoder_map0;
+    nanocbor_encoder_init(&nc, obj, *len_obj);
+    nanocbor_fmt_tag(&nc, cose_tag_sign);
+    nanocbor_fmt_array(&nc, 4);
+    nanocbor_put_bstr(&nc, NULL, 0);
+    nanocbor_fmt_map(&nc, 0);
+    nanocbor_put_bstr(&nc, pld, len_pld);
+    nanocbor_fmt_array(&nc, 1);
+    nanocbor_fmt_array(&nc, 3);
+    nanocbor_put_bstr(&nc, prot, len_prot);
+    nanocbor_fmt_map(&nc, 1);
+    nanocbor_fmt_int(&nc, cose_header_kid);
+    nanocbor_put_bstr(&nc, key->kid, key->len_kid);
+    nanocbor_put_bstr(&nc, sig, len_sig);
 
-    cbor_encoder_init(&encoder_obj0, obj, *len_obj, 0);
-    cbor_encode_tag(&encoder_obj0, cose_tag_sign);                              // tag
-    cbor_encoder_create_array(&encoder_obj0, &encoder_arr0, 4);
-    cbor_encode_byte_string(&encoder_arr0, NULL, 0);                            // protected
-    cbor_encoder_create_map(&encoder_arr0, &encoder_map0, 0);                   // unprotected
-    cbor_encoder_close_container(&encoder_arr0, &encoder_map0);
-    cbor_encode_byte_string(&encoder_arr0, pld, len_pld);                       // payload
-    cbor_encoder_create_array(&encoder_arr0, &encoder_arr1, 1);                 // signatures
-    cbor_encoder_create_array(&encoder_arr1, &encoder_arr2, 3);
-    cose_encode_protected(key, pro, &len_pro);                                  // sign_protected
-    cbor_encode_byte_string(&encoder_arr0, pro, len_pro);
-    cbor_encoder_create_map(&encoder_arr2, &encoder_map0, 1);                   // unprotected
-    CBOR_MAP_BYTES(&encoder_map0, cose_header_kid, key->kid, key->len_kid)
-    cbor_encoder_close_container(&encoder_arr2, &encoder_map0);
-    cbor_encode_byte_string(&encoder_arr1, sig, len_sig);                       // signature
-    cbor_encoder_close_container(&encoder_arr1, &encoder_arr2);
-    cbor_encoder_close_container(&encoder_arr0, &encoder_arr1);
-    cbor_encoder_close_container(&encoder_obj0, &encoder_arr0);
-
-    return cose_encode_final(&encoder_obj0, obj, len_obj);
-}
-
-int cose_decode_sign_payload(
-        const uint8_t * obj, const size_t len_obj,
-        uint8_t * pld, size_t * len_pld) 
-{
-    CborParser parser;
-    CborValue par0, par1;
-    if (cbor_parser_init(obj, len_obj, 0, &parser, &par0) != CborNoError)
-        return COSE_ERROR_TINYCBOR;
-    cbor_value_skip_tag(&par0);                                      
-    cbor_value_enter_container(&par0, &par1);                                   // protected
-    cbor_value_advance(&par1);                                                  // unprotected 
-    cbor_value_advance(&par1);                                                  // payload
-    
-    return cose_decode_final(&par1, pld, len_pld);
+    *len_obj = nanocbor_encoded_len(&nc);
+    return COSE_ERROR_NONE;
 }
 
 int cose_decode_sign_object(
-        cose_key * key,
+        cose_key_t * key,
         const uint8_t * obj, const size_t len_obj,
         const uint8_t * aad, const size_t len_aad,
         uint8_t * tbs, size_t * len_tbs,
-        uint8_t * sig, size_t * len_sig) 
+        const uint8_t ** pld, size_t * len_pld,
+        const uint8_t ** sig, size_t * len_sig) 
 {
-    CborParser parser;
-    CborValue par0, par1, par2, par3;
-    if (cbor_parser_init(obj, len_obj, 0, &parser, &par0) != CborNoError)
-        return COSE_ERROR_TINYCBOR;
-    cbor_value_skip_tag(&par0);                                      
-    cbor_value_enter_container(&par0, &par1);                                   // protected
-    cbor_value_advance(&par1);                                                  // unprotected 
-    cbor_value_advance(&par1);                                                  // payload
-
-    size_t len_pld;
-    cbor_value_get_string_length(&par1, &len_pld);
-    uint8_t pld[len_pld];
-
-    if (cbor_value_copy_byte_string(&par1, pld, &len_pld, &par1) != CborNoError) 
-        return COSE_ERROR_TINYCBOR;
-
-    if (cose_encode_sign_tbs(key, pld, len_pld, aad, len_aad, tbs, len_tbs)) 
+    nanocbor_value_t nc, arr;
+    nanocbor_decoder_init(&nc, obj, len_obj);
+    nanocbor_skip(&nc);
+    if (nanocbor_enter_array(&nc, &arr) < 0) 
+        return COSE_ERROR_DECODE;
+    nanocbor_skip(&arr);
+    nanocbor_skip(&arr);
+    nanocbor_get_bstr(&arr, pld, len_pld); 
+    if (cose_encode_sign_tbs(key, *pld, *len_pld, 
+                aad, len_aad, tbs, len_tbs)) 
         return COSE_ERROR_ENCODE;
 
-    cbor_value_enter_container(&par1, &par2);
-    cbor_value_enter_container(&par2, &par3);                                   // protected
-    cbor_value_advance(&par3);                                                  // unprotected
-    cbor_value_advance(&par3);                                                  // signature
+    nanocbor_value_t arr1, arr2;
+    if (nanocbor_enter_array(&arr, &arr1) < 0) 
+        return COSE_ERROR_DECODE;
+    if (nanocbor_enter_array(&arr1, &arr2) < 0) 
+        return COSE_ERROR_DECODE;
+    nanocbor_skip(&arr2); 
+    nanocbor_skip(&arr2);
+    nanocbor_get_bstr(&arr2, sig, len_sig); 
 
-    return cose_decode_final(&par3, sig, len_sig);
+    return COSE_ERROR_NONE;
 }
 
 #endif /* CONFIG_COZY_SIGN */

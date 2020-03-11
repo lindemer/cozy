@@ -15,28 +15,26 @@
  * under the License.
  */
 
-#ifdef CONFIG_COZY_MAC
-
 #include <cozy/cose.h>
 #include <cozy/common.h>
 
-int cose_mac0_write(cose_crypt_context_t *ctx,
-        const uint8_t * pld, const size_t len_pld, 
-        const uint8_t * aad, const size_t len_aad,
-        const uint8_t * iv, const size_t len_iv,
-        uint8_t * obj, size_t * len_obj) 
+int cose_encode_prot(cose_key_t * key, nanocbor_encoder_t * nc)
 {
-
-    return COSE_ERROR_NONE;
+    nanocbor_fmt_map(nc, 1);
+    nanocbor_fmt_int(nc, cose_header_algorithm);
+    nanocbor_fmt_int(nc, key->alg);
+    return nanocbor_encoded_len(nc);
 }
 
-int cose_mac0_read(cose_crypt_context_t * ctx,
-        const uint8_t * obj, const size_t len_obj, 
-        const uint8_t * aad, const size_t len_aad,
-        uint8_t * pld, size_t * len_pld)
+void xxd(const uint8_t * data, size_t len, int w) 
 {
-
-    return COSE_ERROR_NONE;
+    size_t i, j;
+    for (i = 0; i < len; i += w) {
+        for (j = 0; j < w; j++) {
+            if (i + j == len) break;
+            else printk("%2x ", *(data+i+j));
+        }
+        printk("\n");
+    }
+    printk("\n");
 }
-
-#endif /* CONFIG_COZY_MAC */
