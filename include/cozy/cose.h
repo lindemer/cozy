@@ -257,7 +257,7 @@ void cose_set_aad(cose_key_t * key, const uint8_t * aad, size_t len_aad);
  *
  * @param       ctx     Pointer to uninitialized signing context
  * @param       mode    0 for signature generation, 1 for verification
- * @param       key     PEM-formatted key string
+ * @param       pem     PEM-formatted key string
  *
  * @retval COSE_ERROR_NONE              Success
  * @retval COSE_ERROR_MBEDTLS           Failed to parse key string 
@@ -270,7 +270,7 @@ int cose_sign_init(cose_sign_context_t * ctx,
  * @brief Initialize COSE encryption and MAC context
  *
  * @param       ctx     Pointer to uninitialized encryption and MAC context
- * @param       key     Pointer to a PEM-formatted public key string
+ * @param       key     Pointer to raw key bytes
  * @param       alg     Crypto algorithm allowed for use with this key
  * @param       iv      Initialization vector
  * @param       len_iv  Length of IV
