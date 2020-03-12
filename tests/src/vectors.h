@@ -15,7 +15,7 @@
  * under the License.
  */
 
-#define COSE_TEST_KEY_256_PRIV                                                  \
+#define COSE_TEST_KEY_256_PRV                                                   \
     "-----BEGIN EC PRIVATE KEY-----\r\n"                                        \
     "MHcCAQEEIKw78CnaOuvcRE7dcngmKcbM6FbB3Ue3wkPYQbu+hNHeoAoGCCqGSM49\r\n"      \
     "AwEHoUQDQgAEAWScYjUwMrXA0gAc/LD6EDmJu7Ob7LzngEVn9HJrj4zGUjELTUYf\r\n"      \
@@ -28,7 +28,7 @@
     "7LzngEVn9HJrj4zGUjELTUYfMq2CXK9SpGLX33eRmv9itRcWjWWmqZuh2w==\r\n"          \
     "-----END PUBLIC KEY-----\r\n"
 
-#define COSE_TEST_KEY_384_PRIV                                                  \
+#define COSE_TEST_KEY_384_PRV                                                   \
     "-----BEGIN EC PRIVATE KEY-----\r\n"                                        \
     "MIGkAgEBBDBf6q2n/6Yu09NpdPYIOcprVVxG97FxrBKeBONnjMTpqAiKTgRBlia6\r\n"      \
     "dmvcPfyeJoSgBwYFK4EEACKhZANiAARiUvCjk5UfrvboapTkXvmJkxGKSnTMVkqD\r\n"      \

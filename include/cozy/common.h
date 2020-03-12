@@ -23,41 +23,36 @@
 int cose_encode_prot(cose_key_t * key, nanocbor_encoder_t * nc);
 void xxd(const uint8_t * data, size_t len, int w); 
 
-int cose_encode_sign_tbs(
+int cose_encode_tbs1(
         cose_key_t * key,
         const uint8_t * pld, size_t len_pld, 
-        const uint8_t * aad, size_t len_aad,
         uint8_t * tbs, size_t * len_tbs);
 
 int cose_encode_sign_object(
         cose_key_t * key,
         const uint8_t * pld, size_t len_pld, 
-        const uint8_t * aad, size_t len_aad,
         const uint8_t * sig, size_t len_sig,
         uint8_t * obj, size_t * len_obj);
 
 int cose_decode_sign_object(
         cose_key_t * key,
         const uint8_t * obj, size_t len_obj,
-        const uint8_t * aad, size_t len_aad,
         uint8_t * tbs, size_t * len_tbs,
         const uint8_t ** pld, size_t * len_pld,
         const uint8_t ** sig, size_t * len_sig); 
 
-int cose_encode_encrypt0_tbe(
+int cose_encode_tbe0(
         cose_key_t * key,
-        const uint8_t * aad, size_t len_aad,
         uint8_t * tbe, size_t * len_tbe);
 
 int cose_encode_encrypt0_object(
-        cose_key_t * key,
-        const uint8_t * enc, size_t len_enc, 
-        const uint8_t * iv, size_t len_iv,
+        cose_crypt_context_t * ctx,
+        const uint8_t * enc, size_t len_enc,
         uint8_t * obj, size_t * len_obj);
 
 int cose_decode_encrypt0_object(
+        cose_crypt_context_t * ctx,
         const uint8_t * obj, size_t len_obj,
-        const uint8_t ** enc, size_t * len_enc,
-        const uint8_t ** iv, size_t * len_iv);
+        const uint8_t ** enc, size_t * len_enc);
 
 #endif /* SHARED_H */

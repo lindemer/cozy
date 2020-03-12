@@ -18,6 +18,18 @@
 #include <cozy/cose.h>
 #include <cozy/common.h>
 
+void cose_set_kid(cose_key_t * key, const uint8_t * kid, size_t len_kid)
+{
+    key->kid = kid;
+    key->len_kid = len_kid;
+}
+
+void cose_set_aad(cose_key_t * key, const uint8_t * aad, size_t len_aad)
+{
+    key->aad = aad;
+    key->len_aad = len_aad;
+}
+
 int cose_encode_prot(cose_key_t * key, nanocbor_encoder_t * nc)
 {
     nanocbor_fmt_map(nc, 1);
@@ -32,7 +44,7 @@ void xxd(const uint8_t * data, size_t len, int w)
     for (i = 0; i < len; i += w) {
         for (j = 0; j < w; j++) {
             if (i + j == len) break;
-            else printk("%2x ", *(data+i+j));
+            else printk("%02x ", *(data+i+j));
         }
         printk("\n");
     }
