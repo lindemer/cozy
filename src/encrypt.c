@@ -20,48 +20,6 @@
 #include <cozy/cose.h>
 #include <cozy/common.h>
 
-int cose_crypt_encipher(
-        cose_crypt_context_t * ctx,
-        const uint8_t * pld, const size_t len_pld,
-        const uint8_t * tbe, const size_t len_tbe,
-        uint8_t * enc) 
-{
-    if (ctx->key.alg == cose_alg_aes_gcm_128 || 
-        ctx->key.alg == cose_alg_aes_gcm_192 ||
-        ctx->key.alg == cose_alg_aes_gcm_256) {
-
-        if (mbedtls_gcm_crypt_and_tag(
-                    &ctx->gcm, MBEDTLS_GCM_ENCRYPT, 
-                    len_pld, ctx->iv, ctx->len_iv, tbe, len_tbe, 
-                    pld, enc, ctx->len_mac, enc + len_pld))
-            return COSE_ERROR_ENCRYPT;
-
-    } else return COSE_ERROR_UNSUPPORTED;
-    return COSE_ERROR_NONE;
-}
-
-int cose_crypt_decipher(
-        cose_crypt_context_t * ctx,
-        const uint8_t * enc, const size_t len_enc,
-        const uint8_t * tbe, const size_t len_tbe,
-        uint8_t * pld, size_t * len_pld) 
-{
-    if (ctx->key.alg == cose_alg_aes_gcm_128 || 
-        ctx->key.alg == cose_alg_aes_gcm_192 ||
-        ctx->key.alg == cose_alg_aes_gcm_256) {
-
-        *len_pld = len_enc - ctx->len_mac;
-        if (mbedtls_gcm_auth_decrypt(
-                    &ctx->gcm, *len_pld, 
-                    ctx->iv, ctx->len_iv, 
-                    tbe, len_tbe, enc + *len_pld, 
-                    ctx->len_mac, enc, pld))
-            return COSE_ERROR_DECRYPT;
-            
-    } else return COSE_ERROR_UNSUPPORTED;
-    return COSE_ERROR_NONE;
-}
-
 int cose_crypt_init(cose_crypt_context_t * ctx,
         const uint8_t * key, cose_alg_t alg,
         uint8_t * iv, const size_t len_iv) 
@@ -95,71 +53,49 @@ int cose_crypt_init(cose_crypt_context_t * ctx,
     return COSE_ERROR_NONE;
 }
 
-int cose_encrypt0_write(cose_crypt_context_t *ctx,
-        const uint8_t * pld, const size_t len_pld, 
-        uint8_t * obj, size_t * len_obj) 
+int cose_crypt_encrypt(
+        cose_crypt_context_t * ctx,
+        const uint8_t * pld, const size_t len_pld,
+        const uint8_t * tbe, const size_t len_tbe,
+        uint8_t * enc) 
 {
-    size_t len_enc = len_pld + ctx->len_mac;
-    uint8_t enc[len_enc];
+    if (ctx->key.alg == cose_alg_aes_gcm_128 || 
+        ctx->key.alg == cose_alg_aes_gcm_192 ||
+        ctx->key.alg == cose_alg_aes_gcm_256) {
 
-    size_t len_tbe = len_pld + ctx->key.len_aad;
-    uint8_t tbe[len_tbe];
+        if (mbedtls_gcm_crypt_and_tag(
+                    &ctx->gcm, MBEDTLS_GCM_ENCRYPT, 
+                    len_pld, ctx->iv, ctx->len_iv, tbe, len_tbe, 
+                    pld, enc, ctx->len_mac, enc + len_pld))
+            return COSE_ERROR_ENCRYPT;
 
-    if (cose_encode_tbe0(
-                &ctx->key,
-                tbe, &len_tbe)) 
-        return COSE_ERROR_ENCODE;
-
-    if (cose_crypt_encipher(
-                ctx, 
-                pld, len_pld, 
-                tbe, len_tbe, 
-                enc))
-        return COSE_ERROR_ENCRYPT;
-
-    if (cose_encode_encrypt0_object(
-                ctx,
-                enc, len_enc, 
-                obj, len_obj)) 
-        return COSE_ERROR_ENCODE;
-
+    } else return COSE_ERROR_UNSUPPORTED;
     return COSE_ERROR_NONE;
 }
 
-int cose_encrypt0_read(cose_crypt_context_t * ctx,
-        const uint8_t * obj, const size_t len_obj, 
+int cose_crypt_decrypt(
+        cose_crypt_context_t * ctx,
+        const uint8_t * enc, const size_t len_enc,
+        const uint8_t * tbe, const size_t len_tbe,
         uint8_t * pld, size_t * len_pld) 
 {
-    size_t len_tbe = len_obj + ctx->key.len_aad;
-    uint8_t tbe[len_tbe];
+    if (ctx->key.alg == cose_alg_aes_gcm_128 || 
+        ctx->key.alg == cose_alg_aes_gcm_192 ||
+        ctx->key.alg == cose_alg_aes_gcm_256) {
 
-    uint8_t * enc; size_t len_enc;
-
-    if (cose_encode_tbe0(
-                &ctx->key, 
-                tbe, &len_tbe)) 
-        return COSE_ERROR_ENCODE;
-
-    if (cose_decode_encrypt0_object(
-                ctx, obj, len_obj, 
-                (const uint8_t **) &enc, &len_enc))
-        return COSE_ERROR_DECODE;
-
-    if (cose_crypt_decipher(ctx,
-                enc, len_enc, 
-                tbe, len_tbe, 
-                pld, len_pld))
-        return COSE_ERROR_DECRYPT;
-
+        *len_pld = len_enc - ctx->len_mac;
+        if (mbedtls_gcm_auth_decrypt(
+                    &ctx->gcm, *len_pld, 
+                    ctx->iv, ctx->len_iv, 
+                    tbe, len_tbe, enc + *len_pld, 
+                    ctx->len_mac, enc, pld))
+            return COSE_ERROR_DECRYPT;
+            
+    } else return COSE_ERROR_UNSUPPORTED;
     return COSE_ERROR_NONE;
 }
 
-void cose_crypt_free(cose_crypt_context_t * ctx) 
-{
-     mbedtls_gcm_free(&ctx->gcm);
-}
-
-int cose_encode_tbe0(
+int cose_crypt_encode_tbe0(
         cose_key_t * key,
         uint8_t * tbe, size_t * len_tbe)
 {
@@ -191,7 +127,7 @@ int cose_encode_tbe0(
     return COSE_ERROR_NONE;
 }
 
-int cose_encode_encrypt0_object(
+int cose_crypt_encode_encrypt0(
         cose_crypt_context_t * ctx,
         const uint8_t * enc, const size_t len_enc, 
         uint8_t * obj, size_t * len_obj) 
@@ -218,7 +154,7 @@ int cose_encode_encrypt0_object(
     return COSE_ERROR_NONE;
 } 
 
-int cose_decode_encrypt0_object(
+int cose_crypt_decode_encrypt0(
         cose_crypt_context_t * ctx,
         const uint8_t * obj, const size_t len_obj,
         const uint8_t ** enc, size_t * len_enc)
@@ -251,6 +187,70 @@ int cose_decode_encrypt0_object(
         return COSE_ERROR_DECODE;
 
     return COSE_ERROR_NONE;
+}
+
+int cose_encrypt0_write(cose_crypt_context_t *ctx,
+        const uint8_t * pld, const size_t len_pld, 
+        uint8_t * obj, size_t * len_obj) 
+{
+    size_t len_enc = len_pld + ctx->len_mac;
+    uint8_t enc[len_enc];
+
+    size_t len_tbe = len_pld + ctx->key.len_aad;
+    uint8_t tbe[len_tbe];
+
+    if (cose_crypt_encode_tbe0(
+                &ctx->key,
+                tbe, &len_tbe)) 
+        return COSE_ERROR_ENCODE;
+
+    if (cose_crypt_encrypt(
+                ctx, 
+                pld, len_pld, 
+                tbe, len_tbe, 
+                enc))
+        return COSE_ERROR_ENCRYPT;
+
+    if (cose_crypt_encode_encrypt0(
+                ctx,
+                enc, len_enc, 
+                obj, len_obj)) 
+        return COSE_ERROR_ENCODE;
+
+    return COSE_ERROR_NONE;
+}
+
+int cose_encrypt0_read(cose_crypt_context_t * ctx,
+        const uint8_t * obj, const size_t len_obj, 
+        uint8_t * pld, size_t * len_pld) 
+{
+    size_t len_tbe = len_obj + ctx->key.len_aad;
+    uint8_t tbe[len_tbe];
+
+    uint8_t * enc; size_t len_enc;
+
+    if (cose_crypt_encode_tbe0(
+                &ctx->key, 
+                tbe, &len_tbe)) 
+        return COSE_ERROR_ENCODE;
+
+    if (cose_crypt_decode_encrypt0(
+                ctx, obj, len_obj, 
+                (const uint8_t **) &enc, &len_enc))
+        return COSE_ERROR_DECODE;
+
+    if (cose_crypt_decrypt(ctx,
+                enc, len_enc, 
+                tbe, len_tbe, 
+                pld, len_pld))
+        return COSE_ERROR_DECRYPT;
+
+    return COSE_ERROR_NONE;
+}
+
+void cose_crypt_free(cose_crypt_context_t * ctx) 
+{
+     mbedtls_gcm_free(&ctx->gcm);
 }
 #endif /* CONFIG_COZY_ENCRYPT */
 

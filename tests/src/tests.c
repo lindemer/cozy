@@ -28,7 +28,7 @@ size_t len_obj;
 size_t len_out;
 
 void test_cose_sign_write(void) {
-    const uint8_t * pem = COSE_TEST_KEY_384_PRV;
+    const uint8_t * pem = COSE_TEST_KEY_256_PRV;
     size_t len_pld = strlen(pld);
     len_obj = sizeof(obj);
 
@@ -47,7 +47,7 @@ void test_cose_sign_write(void) {
 }
 
 void test_cose_sign_read(void) {
-    const uint8_t * pem = COSE_TEST_KEY_384_PUB;
+    const uint8_t * pem = COSE_TEST_KEY_256_PUB;
     uint8_t * dec;
     size_t len_dec;
 
