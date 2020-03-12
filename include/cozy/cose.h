@@ -287,7 +287,7 @@ void cose_sign_free(cose_sign_context_t * ctx);
 void cose_crypt_free(cose_crypt_context_t * ctx);
 
 /**
- * @brief Encode a COSE Sign object
+ * @brief Encode a COSE Sign1 object
  *
  * @param       ctx     Pointer to the COSE signing context
  * @param       pld     Pointer to the payload to be signed 
@@ -300,12 +300,12 @@ void cose_crypt_free(cose_crypt_context_t * ctx);
  * @retval COSE_ERROR_HASH              Failed to hash authenticated data
  * @retval COSE_ERROR_SIGN              Failed to encrypt message diggest
  */
-int cose_sign_write(cose_sign_context_t * ctx, 
+int cose_sign1_write(cose_sign_context_t * ctx, 
         const uint8_t * pld, const size_t len_pld, 
         uint8_t * obj, size_t * len_obj);
 
 /**
- * @brief Decode a COSE Sign object
+ * @brief Decode a COSE Sign1 object
  *
  * @param       ctx     Pointer to the COSE signing context
  * @param       obj     Pointer to the encoded COSE object 
@@ -318,7 +318,7 @@ int cose_sign_write(cose_sign_context_t * ctx,
  * @retval COSE_ERROR_HASH              Failed to hash authenticated data
  * @retval COSE_ERROR_AUTHENTICATE      Failed to authenticate signature
  */
-int cose_sign_read(cose_sign_context_t * ctx,
+int cose_sign1_read(cose_sign_context_t * ctx,
         const uint8_t * obj, const size_t len_obj, 
         const uint8_t ** pld, size_t * len_pld);
 

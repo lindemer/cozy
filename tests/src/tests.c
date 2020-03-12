@@ -39,7 +39,7 @@ void test_cose_sign_write(void) {
     cose_set_kid(&ctx.key, kid, sizeof(kid));
     cose_set_aad(&ctx.key, aad, strlen(aad));
 
-    zassert_false(cose_sign_write(&ctx, 
+    zassert_false(cose_sign1_write(&ctx, 
                 pld, len_pld, obj, &len_obj), 
             "Failed to encode COSE object.\n"); 
 
@@ -58,7 +58,7 @@ void test_cose_sign_read(void) {
     cose_set_kid(&ctx.key, kid, sizeof(kid));
     cose_set_aad(&ctx.key, aad, strlen(aad));
 
-    zassert_false(cose_sign_read(&ctx, obj, len_obj,  
+    zassert_false(cose_sign1_read(&ctx, obj, len_obj,  
                 (const uint8_t **) &dec, &len_dec), 
             "Failed to authenticate signature.\n"); 
 

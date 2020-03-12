@@ -53,7 +53,7 @@ int cose_crypt_init(cose_crypt_context_t * ctx,
     return COSE_ERROR_NONE;
 }
 
-int cose_crypt_encrypt(
+int cose_do_encrypt(
         cose_crypt_context_t * ctx,
         const uint8_t * pld, const size_t len_pld,
         const uint8_t * tbe, const size_t len_tbe,
@@ -73,7 +73,7 @@ int cose_crypt_encrypt(
     return COSE_ERROR_NONE;
 }
 
-int cose_crypt_decrypt(
+int cose_do_decrypt(
         cose_crypt_context_t * ctx,
         const uint8_t * enc, const size_t len_enc,
         const uint8_t * tbe, const size_t len_tbe,
@@ -95,7 +95,7 @@ int cose_crypt_decrypt(
     return COSE_ERROR_NONE;
 }
 
-int cose_crypt_encode_tbe0(
+int cose_tbe0(
         cose_key_t * key,
         uint8_t * tbe, size_t * len_tbe)
 {
@@ -127,7 +127,7 @@ int cose_crypt_encode_tbe0(
     return COSE_ERROR_NONE;
 }
 
-int cose_crypt_encode_encrypt0(
+int cose_encrypt0_encode(
         cose_crypt_context_t * ctx,
         const uint8_t * enc, const size_t len_enc, 
         uint8_t * obj, size_t * len_obj) 
@@ -154,7 +154,7 @@ int cose_crypt_encode_encrypt0(
     return COSE_ERROR_NONE;
 } 
 
-int cose_crypt_decode_encrypt0(
+int cose_encrypt0_decode(
         cose_crypt_context_t * ctx,
         const uint8_t * obj, const size_t len_obj,
         const uint8_t ** enc, size_t * len_enc)
@@ -199,19 +199,19 @@ int cose_encrypt0_write(cose_crypt_context_t *ctx,
     size_t len_tbe = len_pld + ctx->key.len_aad;
     uint8_t tbe[len_tbe];
 
-    if (cose_crypt_encode_tbe0(
+    if (cose_tbe0(
                 &ctx->key,
                 tbe, &len_tbe)) 
         return COSE_ERROR_ENCODE;
 
-    if (cose_crypt_encrypt(
+    if (cose_do_encrypt(
                 ctx, 
                 pld, len_pld, 
                 tbe, len_tbe, 
                 enc))
         return COSE_ERROR_ENCRYPT;
 
-    if (cose_crypt_encode_encrypt0(
+    if (cose_encrypt0_encode(
                 ctx,
                 enc, len_enc, 
                 obj, len_obj)) 
@@ -229,17 +229,17 @@ int cose_encrypt0_read(cose_crypt_context_t * ctx,
 
     uint8_t * enc; size_t len_enc;
 
-    if (cose_crypt_encode_tbe0(
+    if (cose_tbe0(
                 &ctx->key, 
                 tbe, &len_tbe)) 
         return COSE_ERROR_ENCODE;
 
-    if (cose_crypt_decode_encrypt0(
+    if (cose_encrypt0_decode(
                 ctx, obj, len_obj, 
                 (const uint8_t **) &enc, &len_enc))
         return COSE_ERROR_DECODE;
 
-    if (cose_crypt_decrypt(ctx,
+    if (cose_do_decrypt(ctx,
                 enc, len_enc, 
                 tbe, len_tbe, 
                 pld, len_pld))

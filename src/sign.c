@@ -72,7 +72,7 @@ int cose_sign_init(
     return COSE_ERROR_NONE;
 }
 
-int cose_sign_hash(cose_sign_context_t * ctx,
+int cose_sign1_hash(cose_sign_context_t * ctx,
         const uint8_t *pld, const size_t len_pld,
         uint8_t * hash)
 {
@@ -114,7 +114,7 @@ int cose_sign_hash(cose_sign_context_t * ctx,
     return mbedtls_md_finish(&md_ctx, hash);
 }
 
-int cose_sign_encode(
+int cose_sign1_encode(
         cose_key_t * key,
         const uint8_t * pld, const size_t len_pld, 
         const uint8_t * sig, const size_t len_sig,
@@ -139,7 +139,7 @@ int cose_sign_encode(
     return COSE_ERROR_NONE;
 }
 
-int cose_sign_decode(
+int cose_sign1_decode(
         cose_sign_context_t * ctx,
         const uint8_t * obj, const size_t len_obj,
         const uint8_t ** pld, size_t * len_pld,
@@ -155,13 +155,13 @@ int cose_sign_decode(
     nanocbor_skip(&arr);
     nanocbor_get_bstr(&arr, pld, len_pld); 
 
-    cose_sign_hash(ctx, *pld, *len_pld, hash);
+    cose_sign1_hash(ctx, *pld, *len_pld, hash);
     nanocbor_get_bstr(&arr, sig, len_sig); 
 
     return COSE_ERROR_NONE;
 }
 
-int cose_sign_write(cose_sign_context_t * ctx, 
+int cose_sign1_write(cose_sign_context_t * ctx, 
         const uint8_t * pld, const size_t len_pld, 
         uint8_t * obj, size_t * len_obj) 
 {
@@ -169,7 +169,7 @@ int cose_sign_write(cose_sign_context_t * ctx,
     uint8_t hash[ctx->len_hash];
     uint8_t sig[ctx->len_sig];
     
-    cose_sign_hash(ctx, pld, len_pld, hash);
+    cose_sign1_hash(ctx, pld, len_pld, hash);
 
     if (mbedtls_ecdsa_write_signature(
                 ctx->pk.pk_ctx, ctx->md_alg, 
@@ -178,7 +178,7 @@ int cose_sign_write(cose_sign_context_t * ctx,
                 NULL, NULL)) 
         return COSE_ERROR_SIGN;
 
-    if (cose_sign_encode(
+    if (cose_sign1_encode(
                 &ctx->key, 
                 pld, len_pld, 
                 sig, len_buff,
@@ -188,7 +188,7 @@ int cose_sign_write(cose_sign_context_t * ctx,
     return COSE_ERROR_NONE;
 }
 
-int cose_sign_read(cose_sign_context_t * ctx, 
+int cose_sign1_read(cose_sign_context_t * ctx, 
         const uint8_t * obj, const size_t len_obj, 
         const uint8_t ** pld, size_t * len_pld) 
 {
@@ -196,7 +196,7 @@ int cose_sign_read(cose_sign_context_t * ctx,
     uint8_t * sig;
     size_t len_sig;
 
-    if (cose_sign_decode(ctx, 
+    if (cose_sign1_decode(ctx, 
                 obj, len_obj,
                 pld, len_pld,
                 (const uint8_t **) &sig, 
