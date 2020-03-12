@@ -165,7 +165,6 @@ int cose_sign1_write(cose_sign_context_t * ctx,
         const uint8_t * pld, const size_t len_pld, 
         uint8_t * obj, size_t * len_obj) 
 {
-    size_t len_buff = *len_obj;
     uint8_t hash[ctx->len_hash];
     uint8_t sig[ctx->len_sig];
     
@@ -174,14 +173,14 @@ int cose_sign1_write(cose_sign_context_t * ctx,
     if (mbedtls_ecdsa_write_signature(
                 ctx->pk.pk_ctx, ctx->md_alg, 
                 hash, ctx->len_hash, 
-                sig, &len_buff, 
+                sig, &ctx->len_sig, 
                 NULL, NULL)) 
         return COSE_ERROR_SIGN;
 
     if (cose_sign1_encode(
                 &ctx->key, 
                 pld, len_pld, 
-                sig, len_buff,
+                sig, ctx->len_sig,
                 obj, len_obj))
         return COSE_ERROR_ENCODE;
 
