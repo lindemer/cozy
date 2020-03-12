@@ -15,12 +15,12 @@
  * under the License.
  */
 
-#ifndef SHARED_H
-#define SHARED_H
+#ifndef COMMON_H
+#define COMMON_H
 
 #include <cozy/cose.h>
 
 int cose_encode_prot(cose_key_t * key, nanocbor_encoder_t * nc);
 void xxd(const uint8_t * data, size_t len, int w); 
 
-#endif /* SHARED_H */
+#endif /* COMMON_H */
