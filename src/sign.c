@@ -92,10 +92,21 @@ int cose_sign1_hash(cose_sign_context_t * ctx,
     nanocbor_encoder_init(&nc, prot, len_prot);
     cose_encode_prot(&ctx->key, &nc);
 
+    /* compute length of Sig_structure */
+    nanocbor_encoder_init(&nc, NULL, 0);
+    nanocbor_fmt_array(&nc, 4);
+    nanocbor_put_tstr(&nc, COSE_CONTEXT_SIGN1);
+    nanocbor_put_bstr(&nc, prot, len_prot);
+    nanocbor_put_bstr(&nc, ctx->key.aad, ctx->key.len_aad);
+    nanocbor_put_bstr(&nc, pld, len_pld);
+    size_t len_str = nanocbor_encoded_len(&nc);
+
     /* serialize and hash ToBeSigned */
-    size_t len_buf = 4;
+    size_t len_buf = 8;
     uint8_t buf[len_buf];
+
     nanocbor_encoder_init(&nc, buf, len_buf);
+    nanocbor_fmt_bstr(&nc, len_str);
     nanocbor_fmt_array(&nc, 4);
     mbedtls_md_update(&md_ctx, buf, nanocbor_encoded_len(&nc));
 
