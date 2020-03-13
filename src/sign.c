@@ -20,16 +20,16 @@
 #include <cozy/cose.h>
 #include <cozy/common.h>
 
-#define HASH_TSTR(md_ctx, nc, buf, len_buf, str)                        \
-    nanocbor_encoder_init(&nc, buf, len_buf);                           \
-    nanocbor_fmt_tstr(&nc, strlen(str));                                \
-    mbedtls_md_update(&md_ctx, buf, nanocbor_encoded_len(&nc));         \
-    mbedtls_md_update(&md_ctx, str, strlen(str));                       \
+#define HASH_TSTR(md_ctx, nc, buf, len_buf, str)                \
+    nanocbor_encoder_init(&nc, buf, len_buf);                   \
+    nanocbor_fmt_tstr(&nc, strlen(str));                        \
+    mbedtls_md_update(&md_ctx, buf, nanocbor_encoded_len(&nc)); \
+    mbedtls_md_update(&md_ctx, str, strlen(str));
 
-#define HASH_BSTR(md_ctx, nc, buf, len_buf, bstr, len_bstr)             \
-    nanocbor_encoder_init(&nc, buf, len_buf);                           \
-    nanocbor_fmt_bstr(&nc, len_bstr);                                   \
-    mbedtls_md_update(&md_ctx, buf, nanocbor_encoded_len(&nc));         \
+#define HASH_BSTR(md_ctx, nc, buf, len_buf, bstr, len_bstr)     \
+    nanocbor_encoder_init(&nc, buf, len_buf);                   \
+    nanocbor_fmt_bstr(&nc, len_bstr);                           \
+    mbedtls_md_update(&md_ctx, buf, nanocbor_encoded_len(&nc)); \
     mbedtls_md_update(&md_ctx, bstr, len_bstr);
 
 int cose_sign_init(
@@ -38,6 +38,7 @@ int cose_sign_init(
         const uint8_t * pem) 
 {
     mbedtls_pk_init(&ctx->pk);
+
     if (mode == cose_mode_r) {
         ctx->key.op = cose_key_op_verify;
         if (mbedtls_pk_parse_public_key(
@@ -49,8 +50,10 @@ int cose_sign_init(
                     &ctx->pk, pem, strlen(pem) + 1, NULL, 0)) 
             return COSE_ERROR_MBEDTLS;
     } else return COSE_ERROR_UNSUPPORTED;
+
     ctx->key.kty = cose_kty_ec2;
     mbedtls_ecp_group_id grp_id = mbedtls_pk_ec(ctx->pk)->grp.id;
+
     if (grp_id == MBEDTLS_ECP_DP_SECP256R1) {
         ctx->len_hash = 32;
         ctx->key.crv = cose_curve_p256;
@@ -69,6 +72,7 @@ int cose_sign_init(
     ctx->key.len_kid = 0;
     ctx->key.aad = NULL;
     ctx->key.len_aad = 0;
+
     return COSE_ERROR_NONE;
 }
 
@@ -88,21 +92,10 @@ int cose_sign1_hash(cose_sign_context_t * ctx,
     nanocbor_encoder_init(&nc, prot, len_prot);
     cose_encode_prot(&ctx->key, &nc);
 
-    /* compute length of Sig_structure */
-    nanocbor_encoder_init(&nc, NULL, 0);
-    nanocbor_fmt_array(&nc, 4);
-    nanocbor_put_tstr(&nc, COSE_CONTEXT_SIGN1);
-    nanocbor_put_bstr(&nc, prot, len_prot);
-    nanocbor_put_bstr(&nc, ctx->key.aad, ctx->key.len_aad);
-    nanocbor_put_bstr(&nc, pld, len_pld);
-    size_t len_str = nanocbor_encoded_len(&nc);
-
     /* serialize and hash ToBeSigned */
-    size_t len_buf = 8;
+    size_t len_buf = 4;
     uint8_t buf[len_buf];
-
     nanocbor_encoder_init(&nc, buf, len_buf);
-    nanocbor_fmt_bstr(&nc, len_str);
     nanocbor_fmt_array(&nc, 4);
     mbedtls_md_update(&md_ctx, buf, nanocbor_encoded_len(&nc));
 
@@ -111,7 +104,8 @@ int cose_sign1_hash(cose_sign_context_t * ctx,
     HASH_BSTR(md_ctx, nc, buf, len_buf, ctx->key.aad, ctx->key.len_aad)
     HASH_BSTR(md_ctx, nc, buf, len_buf, pld, len_pld)
 
-    return mbedtls_md_finish(&md_ctx, hash);
+    if (mbedtls_md_finish(&md_ctx, hash)) return COSE_ERROR_HASH;
+    return COSE_ERROR_NONE;
 }
 
 int cose_sign1_encode(
@@ -202,7 +196,7 @@ int cose_sign1_read(cose_sign_context_t * ctx,
                 &len_sig, hash))
         return COSE_ERROR_DECODE;
 
-   if (mbedtls_pk_verify(
+    if (mbedtls_pk_verify(
                 &ctx->pk, ctx->md_alg, 
                 hash, 0, sig, len_sig))
         return COSE_ERROR_AUTHENTICATE;
