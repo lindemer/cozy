@@ -1,6 +1,7 @@
 menuconfig COZY
     bool "Cozy Support"
     select MBEDTLS
+    select MBEDTLS_ENABLE_HEAP
     help
         This option enables the Cozy COSE library.
 
